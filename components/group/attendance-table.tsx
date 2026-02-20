@@ -127,10 +127,10 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     }));
   };
 
-  const handleStatusChange = (studentId: string, newStatus: string) => {
+  const handleStatusChange = (studentId: string, newStatus: 'present' | 'absent' | 'excused') => {
     setStudents(
       students.map((s) =>
-        s.id === studentId ? { ...s, status: newStatus as any } : s
+        s.id === studentId ? { ...s, status: newStatus } : s
       )
     );
   };
@@ -182,9 +182,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     
   const presentCount = filteredStudents.filter((s) => s.status === 'present').length;
   const absentCount = filteredStudents.filter((s) => s.status === 'absent').length;
-  const excusedCount = filteredStudents.filter((s) => s.status === 'excused').length;
   const totalCount = filteredStudents.length;
-  const percentage = totalCount > 0 ? ((presentCount / totalCount) * 100).toFixed(1) : '0';
   
   // Calculate average marks
   const avgTotalMarks = totalCount > 0 
@@ -196,22 +194,22 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <span className="ml-3 text-muted-foreground">Loading attendance data...</span>
+      <div className="flex items-center justify-center p-8 sm:p-12">
+        <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-muted-foreground" />
+        <span className="ml-3 text-sm sm:text-base text-muted-foreground">Loading attendance data...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Branch Filter */}
       {availableBranches.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center gap-4">
+        <Card className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <label className="text-sm font-medium text-foreground">Filter by Branch:</label>
             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -223,65 +221,68 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               Showing {filteredStudents.length} of {students.length} students
             </span>
           </div>
         </Card>
       )}
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-2">Present</p>
-          <p className="text-3xl font-bold text-green-600">{presentCount}</p>
+      {/* Summary - Mobile Optimized */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <Card className="p-4 sm:p-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Present</p>
+          <p className="text-2xl sm:text-3xl font-bold text-green-600">{presentCount}</p>
           <p className="text-xs text-muted-foreground mt-1">{totalCount > 0 ? ((presentCount/totalCount)*100).toFixed(0) : 0}%</p>
         </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-2">Absent</p>
-          <p className="text-3xl font-bold text-red-600">{absentCount}</p>
+        <Card className="p-4 sm:p-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Absent</p>
+          <p className="text-2xl sm:text-3xl font-bold text-red-600">{absentCount}</p>
           <p className="text-xs text-muted-foreground mt-1">{totalCount > 0 ? ((absentCount/totalCount)*100).toFixed(0) : 0}%</p>
         </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-2">Total Students</p>
-          <p className="text-3xl font-bold text-foreground">{totalCount}</p>
+        <Card className="p-4 sm:p-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Total</p>
+          <p className="text-2xl sm:text-3xl font-bold text-foreground">{totalCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Students</p>
         </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-2">Avg Marks</p>
-          <p className="text-3xl font-bold text-blue-600">{avgTotalMarks}</p>
+        <Card className="p-4 sm:p-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Avg Marks</p>
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{avgTotalMarks}</p>
           <p className="text-xs text-muted-foreground mt-1">out of 40</p>
         </Card>
-        <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-2">Highest</p>
-          <p className="text-3xl font-bold text-purple-600">{maxTotalMarks}</p>
+        <Card className="p-4 sm:p-6">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Highest</p>
+          <p className="text-2xl sm:text-3xl font-bold text-purple-600">{maxTotalMarks}</p>
           <p className="text-xs text-muted-foreground mt-1">marks</p>
         </Card>
       </div>
 
-      {/* Add Student Form */}
+      {/* Add Student Form - Mobile Optimized */}
       {showAddForm && (
-        <Card className="p-4">
-          <div className="flex gap-3 items-end">
+        <Card className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <div className="flex-1">
-              <label className="text-sm font-medium text-foreground mb-1 block">Roll No</label>
+              <label className="text-xs sm:text-sm font-medium text-foreground mb-1 block">Roll No</label>
               <Input
                 placeholder="001"
                 value={newStudentRoll}
                 onChange={(e) => setNewStudentRoll(e.target.value)}
+                className="text-sm"
               />
             </div>
             <div className="flex-1">
-              <label className="text-sm font-medium text-foreground mb-1 block">Name</label>
+              <label className="text-xs sm:text-sm font-medium text-foreground mb-1 block">Name</label>
               <Input
                 placeholder="Student Name"
                 value={newStudentName}
                 onChange={(e) => setNewStudentName(e.target.value)}
+                className="text-sm"
               />
             </div>
             <div className="flex-1">
-              <label className="text-sm font-medium text-foreground mb-1 block">Branch</label>
+              <label className="text-xs sm:text-sm font-medium text-foreground mb-1 block">Branch</label>
               <Select value={newStudentBranch} onValueChange={setNewStudentBranch}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,125 +294,229 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleAddStudent}>Add</Button>
-            <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancel</Button>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button onClick={handleAddStudent} className="flex-1 text-sm">Add</Button>
+            <Button variant="outline" onClick={() => setShowAddForm(false)} className="flex-1 text-sm">Cancel</Button>
           </div>
         </Card>
       )}
 
       {/* Add Student Button */}
       {!showAddForm && (
-        <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full">
+        <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full text-sm">
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
       )}
 
-      {/* Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 font-semibold text-foreground">Roll No</th>
-                <th className="text-left p-4 font-semibold text-foreground">Name</th>
-                <th className="text-left p-4 font-semibold text-foreground">Branch</th>
-                <th className="text-left p-4 font-semibold text-foreground">Status</th>
-                <th className="text-center p-4 font-semibold text-foreground">Attendance<br/><span className="text-xs font-normal">(0-10)</span></th>
-                <th className="text-center p-4 font-semibold text-foreground">English<br/><span className="text-xs font-normal">(0-10)</span></th>
-                <th className="text-center p-4 font-semibold text-foreground">Active<br/><span className="text-xs font-normal">(0-10)</span></th>
-                <th className="text-center p-4 font-semibold text-foreground">Creative<br/><span className="text-xs font-normal">(0-10)</span></th>
-                <th className="text-center p-4 font-semibold text-foreground bg-blue-50">Total<br/><span className="text-xs font-normal">(0-40)</span></th>
-                <th className="text-center p-4 font-semibold text-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student) => (
-                <tr key={student.id} className="border-b border-border hover:bg-muted/30">
-                  <td className="p-4 text-sm text-foreground font-medium">{student.rollNo}</td>
-                  <td className="p-4 text-sm text-foreground">{student.name}</td>
-                  <td className="p-4 text-sm text-muted-foreground">{student.branch}</td>
-                  <td className="p-4">
-                    <Select value={student.status} onValueChange={(value) => handleStatusChange(student.id, value)}>
-                      <SelectTrigger className="w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="present">Present</SelectItem>
-                        <SelectItem value="absent">Absent</SelectItem>
-                        <SelectItem value="excused">Excused</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.attendanceMarks}
-                      onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
-                      className="w-16 text-center"
-                    />
-                  </td>
-                  <td className="p-4 text-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.englishSpeaking}
-                      onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
-                      className="w-16 text-center"
-                    />
-                  </td>
-                  <td className="p-4 text-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.activeParticipation}
-                      onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
-                      className="w-16 text-center"
-                    />
-                  </td>
-                  <td className="p-4 text-center">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.creativeWork}
-                      onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
-                      className="w-16 text-center"
-                    />
-                  </td>
-                  <td className="p-4 text-center bg-blue-50">
-                    <span className="text-lg font-bold text-blue-600">{student.totalMarks}</span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(student.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </td>
+      {/* Table - Mobile: Card View, Desktop: Table View */}
+      <div className="hidden md:block">
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 font-semibold text-foreground text-sm">Roll No</th>
+                  <th className="text-left p-4 font-semibold text-foreground text-sm">Name</th>
+                  <th className="text-left p-4 font-semibold text-foreground text-sm">Branch</th>
+                  <th className="text-left p-4 font-semibold text-foreground text-sm">Status</th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Attendance<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">English<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Active<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Creative<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground bg-blue-50 text-sm">Total<br/><span className="text-xs font-normal">(0-40)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student) => (
+                  <tr key={student.id} className="border-b border-border hover:bg-muted/30">
+                    <td className="p-4 text-sm text-foreground font-medium">{student.rollNo}</td>
+                    <td className="p-4 text-sm text-foreground">{student.name}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{student.branch}</td>
+                    <td className="p-4">
+                      <Select value={student.status} onValueChange={(value) => handleStatusChange(student.id, value)}>
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="present">Present</SelectItem>
+                          <SelectItem value="absent">Absent</SelectItem>
+                          <SelectItem value="excused">Excused</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-4 text-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={student.attendanceMarks}
+                        onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
+                        className="w-16 text-center"
+                      />
+                    </td>
+                    <td className="p-4 text-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={student.englishSpeaking}
+                        onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
+                        className="w-16 text-center"
+                      />
+                    </td>
+                    <td className="p-4 text-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={student.activeParticipation}
+                        onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
+                        className="w-16 text-center"
+                      />
+                    </td>
+                    <td className="p-4 text-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={student.creativeWork}
+                        onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
+                        className="w-16 text-center"
+                      />
+                    </td>
+                    <td className="p-4 text-center bg-blue-50">
+                      <span className="text-lg font-bold text-blue-600">{student.totalMarks}</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(student.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
+          {filteredStudents.length === 0 && (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">
+                {selectedBranch === 'All' 
+                  ? 'No students added yet' 
+                  : `No students in ${selectedBranch} branch`}
+              </p>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {filteredStudents.map((student) => (
+          <Card key={student.id} className="p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <p className="font-semibold text-foreground">{student.name}</p>
+                <p className="text-sm text-muted-foreground">Roll: {student.rollNo} • {student.branch}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(student.id)}
+                className="text-destructive hover:text-destructive -mt-2 -mr-2"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <Select value={student.status} onValueChange={(value) => handleStatusChange(student.id, value)}>
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="excused">Excused</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Attendance (0-10)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={student.attendanceMarks}
+                    onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">English (0-10)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={student.englishSpeaking}
+                    onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Active (0-10)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={student.activeParticipation}
+                    onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Creative (0-10)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={student.creativeWork}
+                    onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Total Marks</p>
+                <p className="text-2xl font-bold text-blue-600">{student.totalMarks}/40</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+        
         {filteredStudents.length === 0 && (
-          <div className="text-center p-8">
-            <p className="text-muted-foreground">
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground text-sm">
               {selectedBranch === 'All' 
                 ? 'No students added yet' 
                 : `No students in ${selectedBranch} branch`}
             </p>
-          </div>
+          </Card>
         )}
-      </Card>
+      </div>
 
       {/* Error Message */}
       {saveError && (

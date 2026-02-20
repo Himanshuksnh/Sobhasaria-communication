@@ -98,40 +98,40 @@ export default function GroupPage({ params }: GroupPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
       {/* Header */}
       <header className="border-b border-border/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="outline" size="icon" className="hover:scale-110 transition-transform">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">
-                  {group.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {group.name}
-                </h1>
-                <p className="text-sm text-muted-foreground">{group.subject}</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Link href="/">
+                <Button variant="outline" size="icon" className="hover:scale-110 transition-transform h-8 w-8 sm:h-10 sm:w-10">
+                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <span className="text-white font-bold text-sm sm:text-lg">
+                    {group.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                    {group.name}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{group.subject}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
-                  <Settings className="w-4 h-4" />
-                  Settings
+                <Button variant="outline" size="sm" className="flex items-center gap-1 sm:gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex-shrink-0">
+                  <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Settings</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">Group Settings & Admin</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-lg sm:text-xl font-bold">Group Settings & Admin</DialogTitle>
+                  <DialogDescription className="text-xs sm:text-sm">
                     Manage leaders, generate invites, and export data
                   </DialogDescription>
                 </DialogHeader>
@@ -147,83 +147,83 @@ export default function GroupPage({ params }: GroupPageProps) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <Tabs defaultValue="attendance" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            <TabsTrigger value="records">Records</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <Tabs defaultValue="attendance" className="space-y-4 sm:space-y-6">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="attendance" className="text-xs sm:text-sm">Attendance</TabsTrigger>
+            <TabsTrigger value="records" className="text-xs sm:text-sm">Records</TabsTrigger>
+            <TabsTrigger value="members" className="text-xs sm:text-sm">Members</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="attendance" className="space-y-6">
-            <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                    Today's Attendance
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {new Date(selectedDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
+          <TabsContent value="attendance" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <div>
+                    <h2 className="text-base sm:text-xl font-bold text-foreground">
+                      Today's Attendance
+                    </h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                      {new Date(selectedDate).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="px-4 py-2 border border-border rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm shadow-sm hover:shadow-md transition-shadow"
-                  />
-                </div>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-border rounded-lg bg-white dark:bg-gray-700 text-foreground text-sm shadow-sm hover:shadow-md transition-shadow"
+                />
               </div>
             </Card>
 
             <AttendanceTable groupId={id} date={selectedDate} />
           </TabsContent>
 
-          <TabsContent value="records" className="space-y-6">
-            <Card className="p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-                  <Download className="w-6 h-6 text-white" />
+          <TabsContent value="records" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                  <Download className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground text-lg">Export Attendance Data</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-foreground text-base sm:text-lg">Export Attendance Data</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Download attendance records in different formats
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6">
                 <Button 
                   onClick={handleExportExcel} 
-                  className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all"
                 >
                   <Download className="w-4 h-4" />
-                  Export to Excel
+                  <span className="text-sm sm:text-base">Export to Excel</span>
                 </Button>
                 <Button 
                   onClick={handleExportCSV} 
                   variant="outline" 
-                  className="flex items-center gap-2 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
                 >
                   <Download className="w-4 h-4" />
-                  Export to CSV
+                  <span className="text-sm sm:text-base">Export to CSV</span>
                 </Button>
                 <Button 
                   onClick={handleExportSummary} 
                   variant="outline" 
-                  className="flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                 >
                   <Download className="w-4 h-4" />
-                  Export Summary Report
+                  <span className="text-sm sm:text-base">Export Summary</span>
                 </Button>
               </div>
             </Card>

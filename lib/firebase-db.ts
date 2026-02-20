@@ -24,9 +24,16 @@ export class FirebaseDBService {
   private invitesCollection = 'invites';
   private studentsCollection = 'students';
 
+  private checkDB() {
+    if (!db) {
+      throw new Error('Firebase Firestore not initialized');
+    }
+  }
+
   // ==================== GROUPS ====================
 
   async createGroup(group: Group): Promise<void> {
+    this.checkDB();
     const groupRef = doc(db, this.groupsCollection, group.id);
     await setDoc(groupRef, {
       ...group,
@@ -35,6 +42,7 @@ export class FirebaseDBService {
   }
 
   async getGroup(groupId: string): Promise<Group | null> {
+    this.checkDB();
     const groupRef = doc(db, this.groupsCollection, groupId);
     const groupSnap = await getDoc(groupRef);
     
@@ -45,6 +53,7 @@ export class FirebaseDBService {
   }
 
   async getUserGroups(userEmail: string): Promise<Group[]> {
+    this.checkDB();
     const groupsRef = collection(db, this.groupsCollection);
     const q = query(
       groupsRef,
@@ -56,16 +65,19 @@ export class FirebaseDBService {
   }
 
   async updateGroup(groupId: string, updates: Partial<Group>): Promise<void> {
+    this.checkDB();
     const groupRef = doc(db, this.groupsCollection, groupId);
     await updateDoc(groupRef, updates);
   }
 
   async deleteGroup(groupId: string): Promise<void> {
+    this.checkDB();
     const groupRef = doc(db, this.groupsCollection, groupId);
     await deleteDoc(groupRef);
   }
 
   async addLeaderToGroup(groupId: string, email: string): Promise<void> {
+    this.checkDB();
     const group = await this.getGroup(groupId);
     if (group && !group.leaders.includes(email)) {
       group.leaders.push(email);
@@ -80,6 +92,7 @@ export class FirebaseDBService {
     name: string;
     branch: string;
   }): Promise<void> {
+    this.checkDB();
     const studentRef = doc(db, this.studentsCollection, `${groupId}_${student.rollNo}`);
     await setDoc(studentRef, {
       groupId,
@@ -89,6 +102,7 @@ export class FirebaseDBService {
   }
 
   async getGroupStudents(groupId: string): Promise<any[]> {
+    this.checkDB();
     const studentsRef = collection(db, this.studentsCollection);
     const q = query(studentsRef, where('groupId', '==', groupId));
     
@@ -97,6 +111,7 @@ export class FirebaseDBService {
   }
 
   async deleteStudent(groupId: string, rollNo: string): Promise<void> {
+    this.checkDB();
     const studentRef = doc(db, this.studentsCollection, `${groupId}_${rollNo}`);
     await deleteDoc(studentRef);
   }
@@ -119,6 +134,7 @@ export class FirebaseDBService {
       remarks?: string;
     }>
   ): Promise<void> {
+    this.checkDB();
     const batch = writeBatch(db);
 
     records.forEach((record) => {
@@ -140,6 +156,7 @@ export class FirebaseDBService {
   }
 
   async getAttendanceByDate(groupId: string, date: string): Promise<any[]> {
+    this.checkDB();
     const attendanceRef = collection(db, this.attendanceCollection);
     const q = query(
       attendanceRef,
@@ -152,6 +169,7 @@ export class FirebaseDBService {
   }
 
   async getAllAttendance(groupId: string): Promise<any[]> {
+    this.checkDB();
     const attendanceRef = collection(db, this.attendanceCollection);
     const q = query(
       attendanceRef,
@@ -166,6 +184,7 @@ export class FirebaseDBService {
   // ==================== INVITES ====================
 
   async generateInvite(groupId: string, createdBy: string): Promise<string> {
+    this.checkDB();
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
@@ -190,6 +209,7 @@ export class FirebaseDBService {
     groupId?: string;
     error?: string;
   }> {
+    this.checkDB();
     const inviteRef = doc(db, this.invitesCollection, code);
     const inviteSnap = await getDoc(inviteRef);
 
@@ -219,6 +239,7 @@ export class FirebaseDBService {
   }
 
   async getGroupInvites(groupId: string): Promise<any[]> {
+    this.checkDB();
     const invitesRef = collection(db, this.invitesCollection);
     const q = query(
       invitesRef,

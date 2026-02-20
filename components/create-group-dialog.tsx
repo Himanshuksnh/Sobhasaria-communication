@@ -72,17 +72,17 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
           Create Group
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Create New Group</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Set up a new lab group or class
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
               Group Name
             </label>
             <Input
@@ -90,7 +90,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
-              className="placeholder:text-muted-foreground/60"
+              className="placeholder:text-muted-foreground/60 text-sm"
             />
             <p className="text-xs text-muted-foreground mt-1">
               💡 Tip: Include batch and lab name
@@ -98,7 +98,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
               Subject/Course
             </label>
             <Input
@@ -106,7 +106,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={loading}
-              className="placeholder:text-muted-foreground/60"
+              className="placeholder:text-muted-foreground/60 text-sm"
             />
             <p className="text-xs text-muted-foreground mt-1">
               💡 Tip: Enter the subject or course name
@@ -114,10 +114,10 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
               Lab Branches
             </label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex flex-col sm:flex-row gap-2 mb-2">
               <Input
                 placeholder="Example: Data Science, Electrical, etc."
                 value={branchInput}
@@ -129,13 +129,14 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
                   }
                 }}
                 disabled={loading}
-                className="placeholder:text-muted-foreground/60"
+                className="placeholder:text-muted-foreground/60 text-sm flex-1"
               />
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleAddBranch}
                 disabled={loading}
+                className="w-full sm:w-auto text-sm"
               >
                 Add
               </Button>
@@ -148,13 +149,13 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               {branches.map((branch) => (
                 <div
                   key={branch}
-                  className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm"
+                  className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-700 dark:text-blue-300 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-sm"
                 >
                   {branch}
                   <button
                     type="button"
                     onClick={() => handleRemoveBranch(branch)}
-                    className="font-bold hover:opacity-70 transition-opacity"
+                    className="font-bold hover:opacity-70 transition-opacity text-sm sm:text-base"
                     disabled={loading}
                   >
                     ×
@@ -164,20 +165,20 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 text-sm"
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={loading} 
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-sm"
             >
               {loading ? 'Creating...' : 'Create Group'}
             </Button>
