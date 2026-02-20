@@ -62,18 +62,39 @@ npm run dev
 
 7. Open [http://localhost:3000](http://localhost:3000)
 
-## 📚 Documentation
+## 📚 Setup Instructions
 
-- **[Quick Start Guide](docs/START_HERE.md)** - Start here for quick setup
-- **[Complete Setup Instructions](docs/FINAL_SETUP_INSTRUCTIONS.md)** - Detailed setup guide (Hindi)
-- **[Simple Hindi Guide](docs/README_SIMPLE.md)** - Easy to understand Hindi guide
-- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Quick commands and tips
-- **[Technical Details](docs/FIREBASE_COMPLETE_SETUP.md)** - Complete technical documentation
-- **[GitHub Guide](docs/GITHUB_DEPLOYED.md)** - GitHub deployment guide
-- **[Cleanup Summary](docs/CLEANUP_SUMMARY.md)** - Code cleanup details
-- **[Migration Summary](docs/MIGRATION_SUMMARY.md)** - Migration from Google Sheets
-- **[Changes Log](docs/CHANGES_LOG.md)** - Complete changes history
-- **[Testing Checklist](docs/FINAL_CHECKLIST.md)** - Testing and deployment checklist
+### Firebase Console Setup (Required)
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select project: **sobhasaria-communcation**
+3. Enable Authentication:
+   - Email/Password provider
+   - Google Sign-In provider
+4. Create Firestore Database
+5. Set security rules (see below)
+
+### Firestore Security Rules
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /groups/{groupId} {
+      allow read, write: if request.auth != null;
+    }
+    match /attendance/{attendanceId} {
+      allow read, write: if request.auth != null;
+    }
+    match /students/{studentId} {
+      allow read, write: if request.auth != null;
+    }
+    match /invites/{inviteCode} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
 
 ## 🔧 Tech Stack
 
