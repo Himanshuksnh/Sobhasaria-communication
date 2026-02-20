@@ -116,62 +116,129 @@ export default function AdvancedSettings({
       </TabsList>
 
       <TabsContent value="leaders" className="space-y-4">
-        <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4">Current Leaders</h3>
+        <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-foreground text-lg">Current Leaders</h3>
+          </div>
           <div className="space-y-3">
-            {leaders.map((leader) => (
-              <div key={leader} className="flex items-center justify-between p-3 bg-muted rounded">
-                <span className="text-sm text-foreground">{leader}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveLeader(leader)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+            {leaders.map((leader, index) => (
+              <div key={leader} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    {leader.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{leader}</span>
+                    {index === 0 && (
+                      <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                        Owner
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {index !== 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveLeader(leader)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4">Add New Leader</h3>
+        <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+          <h3 className="font-semibold text-foreground mb-2">Add New Leader (Direct)</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Add a leader directly by email (they must have an account)
+          </p>
           <div className="flex gap-2">
             <Input
               type="email"
               placeholder="email@example.com"
               value={newLeaderEmail}
               onChange={(e) => setNewLeaderEmail(e.target.value)}
+              className="flex-1"
             />
-            <Button onClick={handleAddLeader}>Add</Button>
+            <Button 
+              onClick={handleAddLeader}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              Add
+            </Button>
           </div>
         </Card>
       </TabsContent>
 
       <TabsContent value="invites" className="space-y-4">
-        <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4">Generate Invite Link</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Generate a new invite code to share with others (valid for 7 days)
-          </p>
-          <Button onClick={handleGenerateInvite} disabled={isGenerating} className="mb-4">
-            {isGenerating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {isGenerating ? 'Generating...' : 'Generate New Invite'}
-          </Button>
+        <Card className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-800">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground text-lg mb-2">Add Co-Leader via Invite Link</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Generate a secure invite link to add another leader to this group. The link is valid for 7 days and can only be used once.
+              </p>
+              <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>How it works:</strong>
+                </p>
+                <ol className="text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1 ml-4 list-decimal">
+                  <li>Click "Generate New Invite" button</li>
+                  <li>Copy the generated link</li>
+                  <li>Share it with your co-leader via WhatsApp/Email</li>
+                  <li>They click the link and login</li>
+                  <li>They automatically become a co-leader!</li>
+                </ol>
+              </div>
+              <Button 
+                onClick={handleGenerateInvite} 
+                disabled={isGenerating} 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+              >
+                {isGenerating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {isGenerating ? 'Generating...' : '✨ Generate New Invite'}
+              </Button>
+            </div>
+          </div>
           
           {inviteCode && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-foreground mb-2">Share this link:</h4>
+            <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-green-300 dark:border-green-700 shadow-md">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h4 className="text-sm font-semibold text-green-700 dark:text-green-400">Invite Link Generated!</h4>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">Share this link with your co-leader:</p>
               <div className="flex gap-2">
-                <code className="flex-1 p-3 bg-muted rounded text-sm text-foreground font-mono break-all">
+                <code className="flex-1 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm text-foreground font-mono break-all border border-gray-300 dark:border-gray-600">
                   {`${typeof window !== 'undefined' ? window.location.origin : ''}/join/${inviteCode}`}
                 </code>
-                <Button onClick={handleCopyInvite}>
+                <Button 
+                  onClick={handleCopyInvite}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-md"
+                >
                   <Copy className="w-4 h-4 mr-2" />
-                  {copiedCode ? 'Copied!' : 'Copy'}
+                  {copiedCode ? '✓ Copied!' : 'Copy'}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                ⏰ This link expires in 7 days and can only be used once.
+              </p>
             </div>
           )}
         </Card>

@@ -86,11 +86,15 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               Group Name
             </label>
             <Input
-              placeholder="Lab 1 - Physics"
+              placeholder="Example: C2 Batch - Communication Lab"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
+              className="placeholder:text-muted-foreground/60"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 Tip: Include batch and lab name
+            </p>
           </div>
 
           <div>
@@ -98,11 +102,15 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               Subject/Course
             </label>
             <Input
-              placeholder="Physics 101"
+              placeholder="Example: Communication Skills"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={loading}
+              className="placeholder:text-muted-foreground/60"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 Tip: Enter the subject or course name
+            </p>
           </div>
 
           <div>
@@ -111,7 +119,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
             </label>
             <div className="flex gap-2 mb-2">
               <Input
-                placeholder="Branch name (e.g., Data Science, A, Section A)"
+                placeholder="Example: Data Science, Electrical, etc."
                 value={branchInput}
                 onChange={(e) => setBranchInput(e.target.value)}
                 onKeyPress={(e) => {
@@ -121,6 +129,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
                   }
                 }}
                 disabled={loading}
+                className="placeholder:text-muted-foreground/60"
               />
               <Button
                 type="button"
@@ -131,6 +140,9 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
                 Add
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              💡 Tip: Add each branch separately (e.g., Data Science, Electrical)
+            </p>
 
             <div className="flex flex-wrap gap-2">
               {branches.map((branch) => (
