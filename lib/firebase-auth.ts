@@ -23,7 +23,9 @@ export class FirebaseAuthService {
 
   // Sign up with email and password
   async signUp(email: string, password: string, displayName?: string): Promise<User> {
-    if (!auth) throw new Error('Firebase Auth not initialized');
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized. Please refresh the page.');
+    }
     
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
@@ -36,7 +38,9 @@ export class FirebaseAuthService {
 
   // Sign in with email and password
   async signIn(email: string, password: string): Promise<User> {
-    if (!auth) throw new Error('Firebase Auth not initialized');
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized. Please refresh the page.');
+    }
     
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
@@ -44,7 +48,9 @@ export class FirebaseAuthService {
 
   // Sign in with Google
   async signInWithGoogle(): Promise<User> {
-    if (!auth || !this.googleProvider) throw new Error('Firebase Auth not initialized');
+    if (!auth || !this.googleProvider) {
+      throw new Error('Firebase Auth not initialized. Please refresh the page.');
+    }
     
     const result = await signInWithPopup(auth, this.googleProvider);
     return result.user;
@@ -52,7 +58,9 @@ export class FirebaseAuthService {
 
   // Sign out
   async signOut(): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth not initialized');
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized. Please refresh the page.');
+    }
     
     await signOut(auth);
   }
@@ -74,7 +82,9 @@ export class FirebaseAuthService {
 
   // Send password reset email
   async resetPassword(email: string): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth not initialized');
+    if (!auth) {
+      throw new Error('Firebase Auth not initialized. Please refresh the page.');
+    }
     
     await sendPasswordResetEmail(auth, email);
   }

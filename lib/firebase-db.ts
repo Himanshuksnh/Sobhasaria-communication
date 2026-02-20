@@ -26,7 +26,7 @@ export class FirebaseDBService {
 
   private checkDB() {
     if (!db) {
-      throw new Error('Firebase Firestore not initialized');
+      throw new Error('Firebase Firestore not initialized. Please refresh the page.');
     }
   }
 

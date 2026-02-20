@@ -13,14 +13,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Validate Firebase config
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error('Missing Firebase configuration. Please check your environment variables.');
-}
+// Initialize Firebase only on client side
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
 
-// Initialize Firebase (works on both client and server)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
+if (typeof window !== 'undefined') {
+  // Validate Firebase config on client side
+  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.error('Missing Firebase configuration. Please check your environment variables.');
+  } else {
+    // Initialize Firebase
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+}
 
 export { app, auth, db };
