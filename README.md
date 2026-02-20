@@ -1,5 +1,7 @@
 # Communication Lab Management System
 
+> Modern attendance and marks management system with Firebase backend
+
 A modern web application for managing Communication Lab attendance and marks with real-time Firebase integration.
 
 ## 🎯 Features
