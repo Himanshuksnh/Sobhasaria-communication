@@ -64,11 +64,16 @@ npm run dev
 
 ## 📚 Documentation
 
-- **[START_HERE.md](START_HERE.md)** - Quick start guide
-- **[FINAL_SETUP_INSTRUCTIONS.md](FINAL_SETUP_INSTRUCTIONS.md)** - Complete setup instructions
-- **[README_SIMPLE.md](README_SIMPLE.md)** - Simple Hindi/Hinglish guide
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference commands
-- **[FIREBASE_COMPLETE_SETUP.md](FIREBASE_COMPLETE_SETUP.md)** - Technical details
+- **[Quick Start Guide](docs/START_HERE.md)** - Start here for quick setup
+- **[Complete Setup Instructions](docs/FINAL_SETUP_INSTRUCTIONS.md)** - Detailed setup guide (Hindi)
+- **[Simple Hindi Guide](docs/README_SIMPLE.md)** - Easy to understand Hindi guide
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Quick commands and tips
+- **[Technical Details](docs/FIREBASE_COMPLETE_SETUP.md)** - Complete technical documentation
+- **[GitHub Guide](docs/GITHUB_DEPLOYED.md)** - GitHub deployment guide
+- **[Cleanup Summary](docs/CLEANUP_SUMMARY.md)** - Code cleanup details
+- **[Migration Summary](docs/MIGRATION_SUMMARY.md)** - Migration from Google Sheets
+- **[Changes Log](docs/CHANGES_LOG.md)** - Complete changes history
+- **[Testing Checklist](docs/FINAL_CHECKLIST.md)** - Testing and deployment checklist
 
 ## 🔧 Tech Stack
 
