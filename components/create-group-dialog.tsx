@@ -67,7 +67,7 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200">
           <Plus className="w-4 h-4" />
           Create Group
         </Button>
@@ -136,13 +136,13 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
               {branches.map((branch) => (
                 <div
                   key={branch}
-                  className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                  className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm"
                 >
                   {branch}
                   <button
                     type="button"
                     onClick={() => handleRemoveBranch(branch)}
-                    className="font-bold hover:opacity-70"
+                    className="font-bold hover:opacity-70 transition-opacity"
                     disabled={loading}
                   >
                     ×
@@ -162,7 +162,11 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
+            <Button 
+              type="submit" 
+              disabled={loading} 
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
               {loading ? 'Creating...' : 'Create Group'}
             </Button>
           </div>
