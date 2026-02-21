@@ -127,9 +127,7 @@ export class FirebaseDBService {
       branch: string;
       status: string;
       attendanceMarks: number;
-      englishSpeaking: number;
-      activeParticipation: number;
-      creativeWork: number;
+      judgeMarks: number;
       totalMarks: number;
       remarks?: string;
     }>

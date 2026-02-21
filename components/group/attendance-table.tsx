@@ -19,11 +19,9 @@ interface Student {
   rollNo: string;
   branch: string;               // Branch name (Data Science, Electrical, etc.)
   status: 'present' | 'absent' | 'excused';
-  attendanceMarks: number;      // Attendance marks (0-10)
-  englishSpeaking: number;      // English speaking (0-10)
-  activeParticipation: number;  // Active participation (0-10)
-  creativeWork: number;         // Creative work (0-10)
-  totalMarks: number;           // Auto-calculated total
+  attendanceMarks: number;      // Attendance marks (0-5)
+  judgeMarks: number;           // Judge marks (0-5)
+  totalMarks: number;           // Auto-calculated total (0-10)
   remarks?: string;
 }
 
@@ -38,6 +36,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string>('All');
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   // Load attendance data from Firebase
   useEffect(() => {
@@ -72,9 +71,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           branch: r.branch,
           status: r.status.toLowerCase() as 'present' | 'absent' | 'excused',
           attendanceMarks: Number(r.attendanceMarks) || 0,
-          englishSpeaking: Number(r.englishSpeaking) || 0,
-          activeParticipation: Number(r.activeParticipation) || 0,
-          creativeWork: Number(r.creativeWork) || 0,
+          judgeMarks: Number(r.judgeMarks) || 0,
           totalMarks: Number(r.totalMarks) || 0,
           remarks: r.remarks || ''
         }));
@@ -97,9 +94,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
       branch: newStudentBranch.trim(),
       status: 'present',
       attendanceMarks: 0,
-      englishSpeaking: 0,
-      activeParticipation: 0,
-      creativeWork: 0,
+      judgeMarks: 0,
       totalMarks: 0,
       remarks: ''
     };
@@ -115,12 +110,8 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     setStudents(students.map(s => {
       if (s.id === studentId) {
         const updated = { ...s, [field]: value };
-        // Auto-calculate total
-        updated.totalMarks = 
-          updated.attendanceMarks + 
-          updated.englishSpeaking + 
-          updated.activeParticipation + 
-          updated.creativeWork;
+        // Auto-calculate total (max 10)
+        updated.totalMarks = updated.attendanceMarks + updated.judgeMarks;
         return updated;
       }
       return s;
@@ -150,9 +141,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         branch: student.branch,
         status: student.status.charAt(0).toUpperCase() + student.status.slice(1),
         attendanceMarks: student.attendanceMarks,
-        englishSpeaking: student.englishSpeaking,
-        activeParticipation: student.activeParticipation,
-        creativeWork: student.creativeWork,
+        judgeMarks: student.judgeMarks,
         totalMarks: student.totalMarks,
         remarks: student.remarks || ''
       }));
@@ -248,7 +237,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         <Card className="p-4 sm:p-6">
           <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Avg Marks</p>
           <p className="text-2xl sm:text-3xl font-bold text-blue-600">{avgTotalMarks}</p>
-          <p className="text-xs text-muted-foreground mt-1">out of 40</p>
+          <p className="text-xs text-muted-foreground mt-1">out of 10</p>
         </Card>
         <Card className="p-4 sm:p-6">
           <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Highest</p>
@@ -321,11 +310,9 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                   <th className="text-left p-4 font-semibold text-foreground text-sm">Name</th>
                   <th className="text-left p-4 font-semibold text-foreground text-sm">Branch</th>
                   <th className="text-left p-4 font-semibold text-foreground text-sm">Status</th>
-                  <th className="text-center p-4 font-semibold text-foreground text-sm">Attendance<br/><span className="text-xs font-normal">(0-10)</span></th>
-                  <th className="text-center p-4 font-semibold text-foreground text-sm">English<br/><span className="text-xs font-normal">(0-10)</span></th>
-                  <th className="text-center p-4 font-semibold text-foreground text-sm">Active<br/><span className="text-xs font-normal">(0-10)</span></th>
-                  <th className="text-center p-4 font-semibold text-foreground text-sm">Creative<br/><span className="text-xs font-normal">(0-10)</span></th>
-                  <th className="text-center p-4 font-semibold text-foreground bg-blue-50 text-sm">Total<br/><span className="text-xs font-normal">(0-40)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Attendance<br/><span className="text-xs font-normal">(0-5)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground text-sm">Judge<br/><span className="text-xs font-normal">(0-5)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground bg-blue-50 text-sm">Total<br/><span className="text-xs font-normal">(0-10)</span></th>
                   <th className="text-center p-4 font-semibold text-foreground text-sm">Actions</th>
                 </tr>
               </thead>
@@ -351,7 +338,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                       <Input
                         type="number"
                         min="0"
-                        max="10"
+                        max="5"
                         value={student.attendanceMarks}
                         onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
                         className="w-16 text-center"
@@ -361,29 +348,9 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                       <Input
                         type="number"
                         min="0"
-                        max="10"
-                        value={student.englishSpeaking}
-                        onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
-                        className="w-16 text-center"
-                      />
-                    </td>
-                    <td className="p-4 text-center">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10"
-                        value={student.activeParticipation}
-                        onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
-                        className="w-16 text-center"
-                      />
-                    </td>
-                    <td className="p-4 text-center">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10"
-                        value={student.creativeWork}
-                        onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
+                        max="5"
+                        value={student.judgeMarks}
+                        onChange={(e) => handleMarksChange(student.id, 'judgeMarks', Number(e.target.value))}
                         className="w-16 text-center"
                       />
                     </td>
@@ -418,92 +385,152 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         </Card>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
+      {/* Mobile Compact List View - Click to Expand */}
+      <div className="md:hidden space-y-2">
         {filteredStudents.map((student) => (
-          <Card key={student.id} className="p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="font-semibold text-foreground">{student.name}</p>
-                <p className="text-sm text-muted-foreground">Roll: {student.rollNo} • {student.branch}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(student.id)}
-                className="text-destructive hover:text-destructive -mt-2 -mr-2"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Status</label>
-                <Select value={student.status} onValueChange={(value) => handleStatusChange(student.id, value)}>
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="present">Present</SelectItem>
-                    <SelectItem value="absent">Absent</SelectItem>
-                    <SelectItem value="excused">Excused</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Attendance (0-10)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={student.attendanceMarks}
-                    onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
-                    className="mt-1"
-                  />
+          <Card 
+            key={student.id} 
+            className={`transition-all ${selectedStudentId === student.id ? 'ring-2 ring-blue-500' : ''}`}
+          >
+            {/* Compact Header - Always Visible */}
+            <div 
+              className="p-3 flex items-center justify-between cursor-pointer hover:bg-muted/30 active:bg-muted/50"
+              onClick={() => setSelectedStudentId(selectedStudentId === student.id ? null : student.id)}
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                  {student.rollNo}
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">English (0-10)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={student.englishSpeaking}
-                    onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Active (0-10)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={student.activeParticipation}
-                    onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground">Creative (0-10)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={student.creativeWork}
-                    onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
-                    className="mt-1"
-                  />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-foreground truncate">{student.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{student.branch}</p>
                 </div>
               </div>
               
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p className="text-xs font-medium text-muted-foreground mb-1">Total Marks</p>
-                <p className="text-2xl font-bold text-blue-600">{student.totalMarks}/40</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Status Badge */}
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  student.status === 'present' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                  student.status === 'absent' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                }`}>
+                  {student.status === 'present' ? 'P' : student.status === 'absent' ? 'A' : 'E'}
+                </span>
+                
+                {/* Total Marks Badge */}
+                <span className="text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                  {student.totalMarks}/40
+                </span>
+                
+                {/* Expand Icon */}
+                <svg 
+                  className={`w-5 h-5 text-muted-foreground transition-transform ${selectedStudentId === student.id ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
             </div>
+
+            {/* Expanded Details - Show on Click */}
+            {selectedStudentId === student.id && (
+              <div className="px-3 pb-3 pt-2 border-t border-border space-y-3">
+                {/* Status Selector */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1.5">Status</label>
+                  <Select value={student.status} onValueChange={(value) => handleStatusChange(student.id, value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="present">✓ Present</SelectItem>
+                      <SelectItem value="absent">✗ Absent</SelectItem>
+                      <SelectItem value="excused">⊘ Excused</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Marks Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                      Attendance (0-10)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={student.attendanceMarks}
+                      onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
+                      className="text-center font-semibold text-base h-11"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                      English (0-10)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={student.englishSpeaking}
+                      onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
+                      className="text-center font-semibold text-base h-11"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                      Active (0-10)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={student.activeParticipation}
+                      onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
+                      className="text-center font-semibold text-base h-11"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                      Creative (0-10)
+                    </label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={student.creativeWork}
+                      onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
+                      className="text-center font-semibold text-base h-11"
+                    />
+                  </div>
+                </div>
+                
+                {/* Total Display */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">Total Marks</span>
+                    <span className="text-2xl font-bold text-blue-600">{student.totalMarks}/40</span>
+                  </div>
+                </div>
+                
+                {/* Delete Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(student.id);
+                  }}
+                  className="w-full text-destructive hover:text-destructive hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove Student
+                </Button>
+              </div>
+            )}
           </Card>
         ))}
         
@@ -511,7 +538,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           <Card className="p-8 text-center">
             <p className="text-muted-foreground text-sm">
               {selectedBranch === 'All' 
-                ? 'No students added yet' 
+                ? 'No students added yet. Click "Add Student" to get started.' 
                 : `No students in ${selectedBranch} branch`}
             </p>
           </Card>
