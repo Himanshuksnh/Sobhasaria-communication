@@ -37,6 +37,8 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   const [selectedBranch, setSelectedBranch] = useState<string>('All');
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [showCopyOption, setShowCopyOption] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
   // Load attendance data from Firebase
   useEffect(() => {
@@ -76,11 +78,69 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           remarks: r.remarks || ''
         }));
         setStudents(studentsFromFirebase);
+        setShowCopyOption(false);
+      } else {
+        // No data for this date - show copy option
+        setStudents([]);
+        setShowCopyOption(true);
       }
     } catch (error) {
       console.error('Error loading attendance:', error);
+      setShowCopyOption(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopyFromPreviousDate = async () => {
+    setIsCopying(true);
+    try {
+      // Get all attendance records for this group
+      const allRecords = await firebaseDB.getAllAttendance(groupId);
+      
+      if (allRecords.length === 0) {
+        alert('No previous attendance data found. Please add students manually.');
+        setIsCopying(false);
+        return;
+      }
+
+      // Find the most recent date (excluding current date)
+      const dates = allRecords
+        .map((r: any) => r.date)
+        .filter((d: string) => d !== date)
+        .sort()
+        .reverse();
+
+      if (dates.length === 0) {
+        alert('No previous attendance data found. Please add students manually.');
+        setIsCopying(false);
+        return;
+      }
+
+      const previousDate = dates[0];
+      const previousRecords = await firebaseDB.getAttendanceByDate(groupId, previousDate);
+
+      // Copy student list with reset marks
+      const copiedStudents = previousRecords.map((r: any) => ({
+        id: r.rollNo,
+        name: r.name,
+        rollNo: r.rollNo,
+        branch: r.branch,
+        status: 'present' as const, // Reset to present
+        attendanceMarks: 0, // Reset marks
+        judgeMarks: 0, // Reset marks
+        totalMarks: 0,
+        remarks: ''
+      }));
+
+      setStudents(copiedStudents);
+      setShowCopyOption(false);
+      alert(`Copied ${copiedStudents.length} students from ${previousDate}. Marks have been reset to 0.`);
+    } catch (error) {
+      console.error('Error copying from previous date:', error);
+      alert('Failed to copy from previous date. Please try again.');
+    } finally {
+      setIsCopying(false);
     }
   };
 
@@ -297,6 +357,42 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
+      )}
+
+      {/* Copy from Previous Date - Show when no data */}
+      {showCopyOption && students.length === 0 && !showAddForm && (
+        <Card className="p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-800">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground text-base sm:text-lg mb-1">Quick Start</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3">
+                No attendance data for this date. Copy student list from previous lab session to save time!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  onClick={handleCopyFromPreviousDate}
+                  disabled={isCopying}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all text-sm"
+                >
+                  {isCopying && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isCopying ? 'Copying...' : '📋 Copy from Previous Date'}
+                </Button>
+                <Button 
+                  onClick={() => setShowCopyOption(false)}
+                  variant="outline"
+                  className="text-sm"
+                >
+                  Start Fresh
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
       )}
 
       {/* Table - Mobile: Card View, Desktop: Table View */}
