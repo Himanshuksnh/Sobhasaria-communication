@@ -419,7 +419,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                 
                 {/* Total Marks Badge */}
                 <span className="text-sm font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
-                  {student.totalMarks}/40
+                  {student.totalMarks}/10
                 </span>
                 
                 {/* Expand Icon */}
@@ -452,16 +452,16 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                   </Select>
                 </div>
                 
-                {/* Marks Grid */}
+                {/* Marks Grid - Only 2 Fields */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                      Attendance (0-10)
+                      Attendance (0-5)
                     </label>
                     <Input
                       type="number"
                       min="0"
-                      max="10"
+                      max="5"
                       value={student.attendanceMarks}
                       onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
                       className="text-center font-semibold text-base h-11"
@@ -469,40 +469,14 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                      English (0-10)
+                      Judge (0-5)
                     </label>
                     <Input
                       type="number"
                       min="0"
-                      max="10"
-                      value={student.englishSpeaking}
-                      onChange={(e) => handleMarksChange(student.id, 'englishSpeaking', Number(e.target.value))}
-                      className="text-center font-semibold text-base h-11"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                      Active (0-10)
-                    </label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.activeParticipation}
-                      onChange={(e) => handleMarksChange(student.id, 'activeParticipation', Number(e.target.value))}
-                      className="text-center font-semibold text-base h-11"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-                      Creative (0-10)
-                    </label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={student.creativeWork}
-                      onChange={(e) => handleMarksChange(student.id, 'creativeWork', Number(e.target.value))}
+                      max="5"
+                      value={student.judgeMarks}
+                      onChange={(e) => handleMarksChange(student.id, 'judgeMarks', Number(e.target.value))}
                       className="text-center font-semibold text-base h-11"
                     />
                   </div>
@@ -512,7 +486,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">Total Marks</span>
-                    <span className="text-2xl font-bold text-blue-600">{student.totalMarks}/40</span>
+                    <span className="text-2xl font-bold text-blue-600">{student.totalMarks}/10</span>
                   </div>
                 </div>
                 
