@@ -9,6 +9,7 @@ import { ArrowLeft, Settings, Loader2, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AttendanceTable from '@/components/group/attendance-table';
+import StudentRecords from '@/components/group/student-records';
 import AdvancedSettings from '@/components/group/advanced-settings';
 import { firebaseDB } from '@/lib/firebase-db';
 import { firebaseAuth } from '@/lib/firebase-auth';
@@ -189,44 +190,7 @@ export default function GroupPage({ params }: GroupPageProps) {
           </TabsContent>
 
           <TabsContent value="records" className="space-y-4 sm:space-y-6">
-            <Card className="p-4 sm:p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                  <Download className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-base sm:text-lg">Export Attendance Data</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Download attendance records in different formats
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6">
-                <Button 
-                  onClick={handleExportExcel} 
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="text-sm sm:text-base">Export to Excel</span>
-                </Button>
-                <Button 
-                  onClick={handleExportCSV} 
-                  variant="outline" 
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="text-sm sm:text-base">Export to CSV</span>
-                </Button>
-                <Button 
-                  onClick={handleExportSummary} 
-                  variant="outline" 
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="text-sm sm:text-base">Export Summary</span>
-                </Button>
-              </div>
-            </Card>
+            <StudentRecords groupId={id} />
           </TabsContent>
 
           <TabsContent value="members" className="space-y-6">
