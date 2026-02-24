@@ -29,20 +29,42 @@ export default function ImportStudents({ groupId, onImportComplete }: ImportStud
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', file.name);
 
     const reader = new FileReader();
+    
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error);
+      alert('Error reading file. Please try again.');
+    };
+
     reader.onload = (e) => {
       try {
+        console.log('File loaded, processing...');
         const data = e.target?.result;
+        
+        if (!data) {
+          console.error('No data in file');
+          alert('File is empty or corrupted');
+          return;
+        }
+
         const workbook = XLSX.read(data, { type: 'binary' });
+        console.log('Workbook loaded, sheets:', workbook.SheetNames);
         
         // Get all sheets
         const allStudents: StudentRow[] = [];
         
         workbook.SheetNames.forEach((sheetName) => {
+          console.log('Processing sheet:', sheetName);
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+          console.log('Sheet data rows:', jsonData.length);
           
           // Skip header row and process data
           for (let i = 1; i < jsonData.length; i++) {
@@ -64,11 +86,18 @@ export default function ImportStudents({ groupId, onImportComplete }: ImportStud
           }
         });
 
+        console.log('Total students found:', allStudents.length);
+        
+        if (allStudents.length === 0) {
+          alert('No valid student data found in Excel file. Please check the format:\n\nColumn A: Roll Number\nColumn B: Student Name\nColumn C: Branch (optional)');
+          return;
+        }
+
         setStudents(allStudents);
         setImportComplete(false);
       } catch (error) {
         console.error('Error reading Excel file:', error);
-        alert('Failed to read Excel file. Please check the format.');
+        alert('Failed to read Excel file. Please check the format and try again.');
       }
     };
 
@@ -168,12 +197,31 @@ export default function ImportStudents({ groupId, onImportComplete }: ImportStud
                   </label>
                 </div>
                 <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg max-w-md">
-                  <p className="font-semibold mb-1">Expected Format:</p>
-                  <p>• First row: Headers (will be skipped)</p>
-                  <p>• Column A: Roll Number (001, 002, etc.)</p>
-                  <p>• Column B: Student Name</p>
-                  <p>• Column C: Branch (optional, uses sheet name if empty)</p>
-                  <p>• Multiple sheets supported</p>
+                  <p className="font-semibold mb-2">📋 Expected Format:</p>
+                  <div className="space-y-1 mb-3">
+                    <p>• <strong>First row:</strong> Headers (will be skipped)</p>
+                    <p>• <strong>Column A:</strong> Roll Number (001, 002, etc.)</p>
+                    <p>• <strong>Column B:</strong> Student Name</p>
+                    <p>• <strong>Column C:</strong> Branch (optional)</p>
+                    <p>• Multiple sheets supported</p>
+                  </div>
+                  <div className="bg-background p-2 rounded text-xs font-mono">
+                    <div className="grid grid-cols-3 gap-2 mb-1 font-bold">
+                      <div>Roll No</div>
+                      <div>Name</div>
+                      <div>Branch</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 opacity-70">
+                      <div>001</div>
+                      <div>John Doe</div>
+                      <div>CS</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 opacity-70">
+                      <div>002</div>
+                      <div>Jane Smith</div>
+                      <div>EE</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
