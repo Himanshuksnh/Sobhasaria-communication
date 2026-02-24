@@ -91,7 +91,29 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
 
   const loadFromPreviousDate = async () => {
     try {
-      // Get all attendance records for this group
+      // First, try to load from permanent students list
+      const permanentStudents = await firebaseDB.getGroupStudents(groupId);
+      
+      if (permanentStudents.length > 0) {
+        // Use permanent students list
+        const studentsFromMaster = permanentStudents.map((s: any) => ({
+          id: s.rollNo,
+          name: s.name,
+          rollNo: s.rollNo,
+          branch: s.branch,
+          status: 'present' as const,
+          attendanceMarks: 0,
+          judgeMarks: 0,
+          totalMarks: 0,
+          remarks: ''
+        }));
+        
+        setStudents(studentsFromMaster);
+        setAutoLoadedFrom('master list');
+        return;
+      }
+
+      // Fallback: Get all attendance records for this group
       const allRecords = await firebaseDB.getAllAttendance(groupId);
       
       if (allRecords.length === 0) {
@@ -129,19 +151,14 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
       }));
 
       setStudents(copiedStudents);
-      
-      // Show info about auto-load
-      if (copiedStudents.length > 0) {
-        setAutoLoadedFrom(previousDate);
-        console.log(`Auto-loaded ${copiedStudents.length} students from ${previousDate}`);
-      }
+      setAutoLoadedFrom(previousDate);
     } catch (error) {
       console.error('Error loading from previous date:', error);
       setStudents([]);
     }
   };
 
-  const handleAddStudent = () => {
+  const handleAddStudent = async () => {
     if (!newStudentName.trim() || !newStudentRoll.trim() || !newStudentBranch.trim()) return;
 
     const newStudent: Student = {
@@ -156,11 +173,27 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
       remarks: ''
     };
 
-    setStudents([...students, newStudent]);
-    setNewStudentName('');
-    setNewStudentRoll('');
-    // Keep branch selected for next student
-    setShowAddForm(false);
+    try {
+      // Save to Firebase students collection (permanent)
+      await firebaseDB.addStudent(groupId, {
+        rollNo: newStudent.rollNo,
+        name: newStudent.name,
+        branch: newStudent.branch
+      });
+
+      // Add to current list
+      setStudents([...students, newStudent]);
+      setNewStudentName('');
+      setNewStudentRoll('');
+      // Keep branch selected for next student
+      setShowAddForm(false);
+      
+      // Show success message
+      console.log(`Student ${newStudent.name} added permanently to group`);
+    } catch (error) {
+      console.error('Error adding student:', error);
+      alert('Failed to add student. Please try again.');
+    }
   };
 
   const handleMarksChange = (studentId: string, field: string, value: number) => {
@@ -312,8 +345,17 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
             </svg>
             <div className="flex-1">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                <strong>Student list auto-loaded</strong> from {new Date(autoLoadedFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}. 
-                Marks have been reset to 0. You can add/remove students as needed.
+                {autoLoadedFrom === 'master list' ? (
+                  <>
+                    <strong>Students loaded from group master list.</strong> All permanently added students are shown. 
+                    Marks have been reset to 0.
+                  </>
+                ) : (
+                  <>
+                    <strong>Student list auto-loaded</strong> from {new Date(autoLoadedFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}. 
+                    Marks have been reset to 0. You can add/remove students as needed.
+                  </>
+                )}
               </p>
             </div>
             <button 
