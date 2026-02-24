@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Trash2, Loader2, Plus } from 'lucide-react';
 import { firebaseDB } from '@/lib/firebase-db';
+import ImportStudents from './import-students';
 
 interface AttendanceTableProps {
   groupId: string;
@@ -417,10 +418,13 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
 
       {/* Add Student Button */}
       {!showAddForm && (
-        <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full text-sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Student
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={() => setShowAddForm(true)} variant="outline" className="flex-1 text-sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Student Manually
+          </Button>
+          <ImportStudents groupId={groupId} onImportComplete={loadAttendanceData} />
+        </div>
       )}
 
       {/* Table - Mobile: Card View, Desktop: Table View */}
