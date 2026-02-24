@@ -37,6 +37,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   const [selectedBranch, setSelectedBranch] = useState<string>('All');
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [autoLoadedFrom, setAutoLoadedFrom] = useState<string | null>(null);
 
   // Load attendance data from Firebase
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
       const records = await firebaseDB.getAttendanceByDate(groupId, date);
       
       if (records.length > 0) {
+        // Data exists for this date
         const studentsFromFirebase = records.map((r: any) => ({
           id: r.rollNo,
           name: r.name,
@@ -76,11 +78,66 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           remarks: r.remarks || ''
         }));
         setStudents(studentsFromFirebase);
+      } else {
+        // No data for this date - try to copy from previous date
+        await loadFromPreviousDate();
       }
     } catch (error) {
       console.error('Error loading attendance:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadFromPreviousDate = async () => {
+    try {
+      // Get all attendance records for this group
+      const allRecords = await firebaseDB.getAllAttendance(groupId);
+      
+      if (allRecords.length === 0) {
+        // No previous data - start fresh
+        setStudents([]);
+        return;
+      }
+
+      // Find the most recent date (excluding current date)
+      const dates = [...new Set(allRecords.map((r: any) => r.date))]
+        .filter((d: string) => d !== date)
+        .sort()
+        .reverse();
+
+      if (dates.length === 0) {
+        // No previous data - start fresh
+        setStudents([]);
+        return;
+      }
+
+      const previousDate = dates[0];
+      const previousRecords = await firebaseDB.getAttendanceByDate(groupId, previousDate);
+
+      // Copy student list with reset marks
+      const copiedStudents = previousRecords.map((r: any) => ({
+        id: r.rollNo,
+        name: r.name,
+        rollNo: r.rollNo,
+        branch: r.branch,
+        status: 'present' as const,
+        attendanceMarks: 0,
+        judgeMarks: 0,
+        totalMarks: 0,
+        remarks: ''
+      }));
+
+      setStudents(copiedStudents);
+      
+      // Show info about auto-load
+      if (copiedStudents.length > 0) {
+        setAutoLoadedFrom(previousDate);
+        console.log(`Auto-loaded ${copiedStudents.length} students from ${previousDate}`);
+      }
+    } catch (error) {
+      console.error('Error loading from previous date:', error);
+      setStudents([]);
     }
   };
 
@@ -245,6 +302,31 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           <p className="text-xs text-muted-foreground mt-1">marks</p>
         </Card>
       </div>
+
+      {/* Auto-load Info Message */}
+      {autoLoadedFrom && students.length > 0 && (
+        <Card className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>Student list auto-loaded</strong> from {new Date(autoLoadedFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}. 
+                Marks have been reset to 0. You can add/remove students as needed.
+              </p>
+            </div>
+            <button 
+              onClick={() => setAutoLoadedFrom(null)}
+              className="text-blue-600 hover:text-blue-800 flex-shrink-0"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </Card>
+      )}
 
       {/* Add Student Form - Mobile Optimized */}
       {showAddForm && (
