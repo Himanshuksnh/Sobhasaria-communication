@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Trash2, Loader2, Plus, Search } from 'lucide-react';
@@ -12,6 +13,8 @@ import ImportStudents from './import-students';
 interface AttendanceTableProps {
   groupId: string;
   date: string;
+  group: any;
+  userEmail: string;
 }
 
 interface Student {
@@ -26,8 +29,11 @@ interface Student {
   remarks?: string;
 }
 
-export default function AttendanceTable({ groupId, date }: AttendanceTableProps) {
+export default function AttendanceTable({ groupId, date, group, userEmail }: AttendanceTableProps) {
   const [students, setStudents] = useState<Student[]>([]);
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [activeTab, setActiveTab] = useState<'students' | 'leaders'>('students');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -42,6 +48,16 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   const [searchQuery, setSearchQuery] = useState('');
   const [showSummaryCards, setShowSummaryCards] = useState(true);
 
+  // Check if user is teacher
+  useEffect(() => {
+    const masterEmail = process.env.NEXT_PUBLIC_MASTER_TEACHER_EMAIL?.toLowerCase();
+    const isMaster = userEmail.toLowerCase() === masterEmail;
+    const isGroupTeacher = group?.teacherEmails?.some((e: string) => 
+      e.toLowerCase() === userEmail.toLowerCase()
+    );
+    setIsTeacher(isMaster || isGroupTeacher);
+  }, [userEmail, group]);
+
   // Load summary cards preference from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('showSummaryCards');
@@ -54,7 +70,10 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   useEffect(() => {
     loadAttendanceData();
     loadGroupData();
-  }, [groupId, date]);
+    if (isTeacher) {
+      loadLeadersData();
+    }
+  }, [groupId, date, isTeacher]);
 
   const loadGroupData = async () => {
     try {
@@ -169,6 +188,30 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     }
   };
 
+  const loadLeadersData = async () => {
+    try {
+      const groupLeaders = await firebaseDB.getGroupLeaders(groupId);
+      const leaderAttendance = await firebaseDB.getLeaderAttendanceByDate(groupId, date);
+      
+      const leadersWithAttendance = groupLeaders.map((leader: any) => {
+        const attendance = leaderAttendance.find((a: any) => a.email === leader.email);
+        return {
+          ...leader,
+          id: leader.email,
+          status: attendance?.status?.toLowerCase() || 'absent',
+          attendanceMarks: Number(attendance?.attendanceMarks) || 0,
+          judgeMarks: Number(attendance?.judgeMarks) || 0,
+          totalMarks: Number(attendance?.totalMarks) || 0,
+          remarks: attendance?.remarks || ''
+        };
+      });
+      
+      setLeaders(leadersWithAttendance);
+    } catch (error) {
+      console.error('Error loading leaders:', error);
+    }
+  };
+
   const handleAddStudent = async () => {
     if (!newStudentName.trim() || !newStudentRoll.trim() || !newStudentBranch.trim()) return;
 
@@ -268,6 +311,35 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     }
   };
 
+  const handleSaveLeaders = async () => {
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const leadersData = leaders.map((leader) => ({
+        email: leader.email,
+        rollNo: leader.rollNo,
+        name: leader.name,
+        branch: leader.branch,
+        status: leader.status.charAt(0).toUpperCase() + leader.status.slice(1),
+        attendanceMarks: leader.attendanceMarks,
+        judgeMarks: leader.judgeMarks,
+        totalMarks: leader.totalMarks,
+        remarks: leader.remarks || ''
+      }));
+
+      await firebaseDB.saveLeaderAttendance(groupId, date, leadersData);
+      alert('Leader attendance saved successfully!');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save leader attendance';
+      setSaveError(errorMessage);
+      console.error('Failed to save leader attendance:', error);
+      alert('Error: ' + errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCancel = () => {
     setSaveError(null);
     // Reset to last saved state
@@ -306,7 +378,16 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Branch Filter & Search */}
+      {/* Tabs for Students and Leaders */}
+      {isTeacher ? (
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'students' | 'leaders')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="leaders">Leaders</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="students" className="space-y-4 sm:space-y-6 mt-4">
+            {/* Students Content - existing UI */}
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col gap-3">
           {/* Branch Filter */}
