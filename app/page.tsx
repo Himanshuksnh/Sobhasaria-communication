@@ -40,7 +40,17 @@ export default function Home() {
 
   const loadGroups = async (userEmail: string) => {
     try {
-      const userGroups = await firebaseDB.getUserGroups(userEmail);
+      const masterTeacherEmail = process.env.NEXT_PUBLIC_MASTER_TEACHER_EMAIL;
+      const isMasterTeacher = userEmail.toLowerCase() === masterTeacherEmail?.toLowerCase();
+      
+      let userGroups;
+      if (isMasterTeacher) {
+        // Master teacher gets ALL groups
+        userGroups = await firebaseDB.getAllGroups();
+      } else {
+        // Normal users get only their groups
+        userGroups = await firebaseDB.getUserGroups(userEmail);
+      }
       
       // Get current academic year (e.g., if 2026, then 2025-26)
       const currentYear = new Date().getFullYear();
@@ -132,7 +142,6 @@ export default function Home() {
     subject: string;
     branches: string[];
     year: string;
-    teacherEmail: string;
   }) => {
     if (!user?.email) return;
 
@@ -143,13 +152,13 @@ export default function Home() {
         name: data.name,
         subject: data.subject,
         year: data.year,
-        teacherEmail: data.teacherEmail,
         sheetId: `sheet-${groupId}`,
         owners: [user.email],
         leaders: [user.email],
         branches: data.branches,
         currentBranch: data.branches[0],
         createdAt: new Date().toISOString(),
+        teacherEmails: [], // Empty initially, master teacher can assign
       };
 
       await firebaseDB.createGroup(newGroup);

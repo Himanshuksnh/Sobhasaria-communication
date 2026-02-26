@@ -12,7 +12,6 @@ interface CreateGroupDialogProps {
     subject: string;
     branches: string[];
     year: string;
-    teacherEmail: string;
   }) => Promise<void>;
 }
 
@@ -21,7 +20,6 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
-  const [teacherEmail, setTeacherEmail] = useState('');
   
   // Auto-set current academic year as default
   const currentYear = new Date().getFullYear();
@@ -45,8 +43,8 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !subject.trim() || !year.trim() || !teacherEmail.trim() || branches.length === 0) {
-      alert('Please fill in all fields including teacher email');
+    if (!name.trim() || !subject.trim() || !year.trim() || branches.length === 0) {
+      alert('Please fill in all fields');
       return;
     }
 
@@ -57,7 +55,6 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
         name: name.trim(),
         subject: subject.trim(),
         year: year.trim(),
-        teacherEmail: teacherEmail.trim().toLowerCase(),
         branches,
       });
 
@@ -65,7 +62,6 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
       setName('');
       setSubject('');
       setYear(defaultAcademicYear);
-      setTeacherEmail('');
       setBranches([]);
       setBranchInput('');
       setOpen(false);
@@ -140,24 +136,6 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
             />
             <p className="text-xs text-muted-foreground mt-1">
               💡 Tip: Enter academic year (e.g., 2024-25)
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
-              Teacher Email <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="email"
-              placeholder="teacher@example.com"
-              value={teacherEmail}
-              onChange={(e) => setTeacherEmail(e.target.value)}
-              disabled={loading}
-              className="placeholder:text-muted-foreground/60 text-sm"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              👨‍🏫 Main authority who can manage leaders
             </p>
           </div>
 

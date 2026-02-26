@@ -9,7 +9,7 @@ export interface Group {
   branches?: string[];
   currentBranch?: string;
   year?: string;
-  teacherEmail?: string; // Main authority who can manage leaders
+  teacherEmails?: string[]; // Group-specific teachers (in addition to master teacher)
 }
 
 export interface Leader {

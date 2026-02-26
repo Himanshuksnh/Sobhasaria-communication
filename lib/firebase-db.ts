@@ -65,6 +65,13 @@ export class FirebaseDBService {
     return querySnapshot.docs.map(doc => doc.data() as Group);
   }
 
+  async getAllGroups(): Promise<Group[]> {
+    this.checkDB();
+    const groupsRef = collection(db, this.groupsCollection);
+    const querySnapshot = await getDocs(groupsRef);
+    return querySnapshot.docs.map(doc => doc.data() as Group);
+  }
+
   async updateGroup(groupId: string, updates: Partial<Group>): Promise<void> {
     this.checkDB();
     const groupRef = doc(db, this.groupsCollection, groupId);
