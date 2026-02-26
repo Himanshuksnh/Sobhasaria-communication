@@ -189,7 +189,10 @@ This project is open source and available under the MIT License.
 
 ## 👥 Authors
 
-- Himanshu Kumar Singh
+**Himanshu Kumawat**
+- Email: himanshunokhval@gmail.com
+- GitHub: [@Himasnhukumawat](https://github.com/Himasnhukumawat)
+- LinkedIn: [himanshu-kumawat](https://linkedin.com/in/himanshu-kumawat-b066ba381)
 
 ## 🙏 Acknowledgments
 

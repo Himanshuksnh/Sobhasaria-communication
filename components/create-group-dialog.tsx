@@ -11,6 +11,7 @@ interface CreateGroupDialogProps {
     name: string;
     subject: string;
     branches: string[];
+    year: string;
   }) => Promise<void>;
 }
 
@@ -19,6 +20,12 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
+  
+  // Auto-set current academic year as default
+  const currentYear = new Date().getFullYear();
+  const defaultAcademicYear = `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+  const [year, setYear] = useState(defaultAcademicYear);
+  
   const [branches, setBranches] = useState<string[]>([]);
   const [branchInput, setBranchInput] = useState('');
 
@@ -36,8 +43,8 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim() || !subject.trim() || branches.length === 0) {
-      alert('Please fill in all fields');
+    if (!name.trim() || !subject.trim() || !year.trim() || branches.length === 0) {
+      alert('Please fill in all fields including year');
       return;
     }
 
@@ -47,12 +54,14 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
       await onCreate({
         name: name.trim(),
         subject: subject.trim(),
+        year: year.trim(),
         branches,
       });
 
       // Reset form
       setName('');
       setSubject('');
+      setYear(defaultAcademicYear); // Reset to current year
       setBranches([]);
       setBranchInput('');
       setOpen(false);
@@ -110,6 +119,23 @@ export default function CreateGroupDialog({ onCreate }: CreateGroupDialogProps) 
             />
             <p className="text-xs text-muted-foreground mt-1">
               💡 Tip: Enter the subject or course name
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-foreground mb-1.5 sm:mb-2">
+              Academic Year <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="Example: 2024-25 or 2025"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              disabled={loading}
+              className="placeholder:text-muted-foreground/60 text-sm"
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 Tip: Enter academic year (e.g., 2024-25)
             </p>
           </div>
 

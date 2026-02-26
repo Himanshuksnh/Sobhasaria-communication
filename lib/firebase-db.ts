@@ -171,12 +171,16 @@ export class FirebaseDBService {
     const attendanceRef = collection(db, this.attendanceCollection);
     const q = query(
       attendanceRef,
-      where('groupId', '==', groupId),
-      orderBy('date', 'desc')
+      where('groupId', '==', groupId)
     );
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data());
+    const results = querySnapshot.docs.map(doc => doc.data());
+    
+    // Sort by date in JavaScript instead of Firestore
+    results.sort((a, b) => b.date.localeCompare(a.date));
+    
+    return results;
   }
 
   // ==================== INVITES ====================

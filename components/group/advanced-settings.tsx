@@ -9,22 +9,61 @@ import { AlertCircle, Copy, Trash2, Loader2 } from 'lucide-react';
 import { firebaseDB } from '@/lib/firebase-db';
 import { firebaseAuth } from '@/lib/firebase-auth';
 import { exportService } from '@/lib/export-service';
+import ThemeToggle from '@/components/theme-toggle';
 
 interface AdvancedSettingsProps {
   groupId: string;
   groupName: string;
   leaders: string[];
+  branches?: string[];
 }
 
 export default function AdvancedSettings({
   groupId,
   groupName,
   leaders,
+  branches = [],
 }: AdvancedSettingsProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [newLeaderEmail, setNewLeaderEmail] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [groupBranches, setGroupBranches] = useState<string[]>(branches);
+  const [newBranch, setNewBranch] = useState('');
+
+  const handleAddBranch = async () => {
+    if (!newBranch.trim()) return;
+    
+    if (groupBranches.includes(newBranch.trim())) {
+      alert('This branch already exists');
+      return;
+    }
+    
+    try {
+      const updatedBranches = [...groupBranches, newBranch.trim()];
+      await firebaseDB.updateGroup(groupId, { branches: updatedBranches });
+      setGroupBranches(updatedBranches);
+      setNewBranch('');
+      alert('Branch added successfully!');
+    } catch (error) {
+      console.error('Error adding branch:', error);
+      alert('Failed to add branch');
+    }
+  };
+
+  const handleRemoveBranch = async (branch: string) => {
+    if (!confirm(`Remove "${branch}" branch? Students in this branch will not be deleted.`)) return;
+    
+    try {
+      const updatedBranches = groupBranches.filter(b => b !== branch);
+      await firebaseDB.updateGroup(groupId, { branches: updatedBranches });
+      setGroupBranches(updatedBranches);
+      alert('Branch removed successfully!');
+    } catch (error) {
+      console.error('Error removing branch:', error);
+      alert('Failed to remove branch');
+    }
+  };
 
   const handleGenerateInvite = async () => {
     setIsGenerating(true);
@@ -93,24 +132,78 @@ export default function AdvancedSettings({
   };
 
   const handleDeleteGroup = async () => {
-    if (!confirm(`Are you sure you want to delete "${groupName}"? This cannot be undone.`)) {
+    // Step 1: Show warning and ask for email confirmation
+    const userEmail = firebaseAuth.getUserEmail();
+    if (!userEmail) {
+      alert('You must be logged in to delete a group');
+      return;
+    }
+
+    const confirmEmail = prompt(
+      `⚠️ WARNING: This will permanently delete "${groupName}" and all its data!\n\n` +
+      `To confirm deletion, please type your email address:\n${userEmail}`
+    );
+
+    if (!confirmEmail) {
+      return; // User cancelled
+    }
+
+    if (confirmEmail.trim().toLowerCase() !== userEmail.toLowerCase()) {
+      alert('❌ Email does not match. Deletion cancelled for safety.');
+      return;
+    }
+
+    // Step 2: Final confirmation
+    const finalConfirm = confirm(
+      `🚨 FINAL CONFIRMATION\n\n` +
+      `Group: "${groupName}"\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Before deletion, we will download all data as backup.\n\n` +
+      `Click OK to proceed with deletion.`
+    );
+
+    if (!finalConfirm) {
       return;
     }
 
     try {
+      // Step 3: Export data before deletion
+      alert('📥 Downloading backup data...');
+      await exportService.exportAttendanceToExcel(groupId, groupName);
+      
+      // Give time for download to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 4: Delete the group
       await firebaseDB.deleteGroup(groupId);
-      alert('Group deleted successfully!');
+      
+      alert(
+        `✅ Group "${groupName}" deleted successfully!\n\n` +
+        `📁 Backup data has been downloaded to your device.\n` +
+        `Check your Downloads folder.`
+      );
+      
       window.location.href = '/';
     } catch (error) {
       console.error('Error deleting group:', error);
-      alert('Failed to delete group');
+      alert('❌ Failed to delete group. Please try again.');
     }
   };
 
   return (
-    <Tabs defaultValue="leaders" className="w-full space-y-4 sm:space-y-6">
-      <TabsList className="grid w-full grid-cols-3">
+    <div className="space-y-4">
+      {/* Theme Toggle at Top Left */}
+      <div className="flex items-center justify-between pb-2 border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Theme:</span>
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <Tabs defaultValue="leaders" className="w-full space-y-4 sm:space-y-6">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="leaders" className="text-xs sm:text-sm">Leaders</TabsTrigger>
+        <TabsTrigger value="branches" className="text-xs sm:text-sm">Branches</TabsTrigger>
         <TabsTrigger value="invites" className="text-xs sm:text-sm">Invites</TabsTrigger>
         <TabsTrigger value="danger" className="text-xs sm:text-sm">Danger</TabsTrigger>
       </TabsList>
@@ -174,6 +267,71 @@ export default function AdvancedSettings({
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto text-sm"
             >
               Add
+            </Button>
+          </div>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="branches" className="space-y-3 sm:space-y-4">
+        <Card className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-foreground text-base sm:text-lg">Current Branches</h3>
+          </div>
+          <div className="space-y-2 sm:space-y-3">
+            {groupBranches.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No branches added yet</p>
+            ) : (
+              groupBranches.map((branch) => (
+                <div key={branch} className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-lg border border-green-200 dark:border-green-800 shadow-sm">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                      {branch.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium text-foreground truncate">{branch}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveBranch(branch)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                  >
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
+          <h3 className="font-semibold text-foreground mb-1.5 sm:mb-2 text-sm sm:text-base">Add New Branch</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+            Add a new branch to organize students (e.g., Data Science, Electrical, CSE)
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              type="text"
+              placeholder="Branch name (e.g., Data Science)"
+              value={newBranch}
+              onChange={(e) => setNewBranch(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddBranch();
+                }
+              }}
+              className="flex-1 text-sm"
+            />
+            <Button 
+              onClick={handleAddBranch}
+              className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 w-full sm:w-auto text-sm"
+            >
+              Add Branch
             </Button>
           </div>
         </Card>
@@ -275,5 +433,6 @@ export default function AdvancedSettings({
         </Card>
       </TabsContent>
     </Tabs>
+    </div>
   );
 }

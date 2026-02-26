@@ -3,18 +3,23 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, Trash2, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { LogOut, Trash2, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CreateGroupDialog from '@/components/create-group-dialog';
+import ThemeToggle from '@/components/theme-toggle';
 import { firebaseAuth } from '@/lib/firebase-auth';
 import { firebaseDB } from '@/lib/firebase-db';
+import { exportService } from '@/lib/export-service';
 
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedYear, setSelectedYear] = useState<string>('All');
 
   useEffect(() => {
     // Listen to auth state changes
@@ -36,7 +41,18 @@ export default function Home() {
   const loadGroups = async (userEmail: string) => {
     try {
       const userGroups = await firebaseDB.getUserGroups(userEmail);
-      setGroups(userGroups);
+      
+      // Get current academic year (e.g., if 2026, then 2025-26)
+      const currentYear = new Date().getFullYear();
+      const academicYear = `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+      
+      // Add default year for old groups that don't have year field
+      const groupsWithYear = userGroups.map(group => ({
+        ...group,
+        year: group.year || academicYear // Default to current academic year
+      }));
+      
+      setGroups(groupsWithYear);
     } catch (error) {
       console.error('Error loading groups:', error);
     }
@@ -54,17 +70,60 @@ export default function Home() {
   const handleDeleteGroup = async (groupId: string, groupName: string, e: React.MouseEvent) => {
     e.preventDefault();
     
-    if (!confirm(`Are you sure you want to delete "${groupName}"? This cannot be undone.`)) {
+    // Step 1: Show warning and ask for email confirmation
+    const userEmail = user?.email;
+    if (!userEmail) {
+      alert('You must be logged in to delete a group');
+      return;
+    }
+
+    const confirmEmail = prompt(
+      `⚠️ WARNING: This will permanently delete "${groupName}" and all its data!\n\n` +
+      `To confirm deletion, please type your email address:\n${userEmail}`
+    );
+
+    if (!confirmEmail) {
+      return; // User cancelled
+    }
+
+    if (confirmEmail.trim().toLowerCase() !== userEmail.toLowerCase()) {
+      alert('❌ Email does not match. Deletion cancelled for safety.');
+      return;
+    }
+
+    // Step 2: Final confirmation
+    const finalConfirm = confirm(
+      `🚨 FINAL CONFIRMATION\n\n` +
+      `Group: "${groupName}"\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Before deletion, we will download all data as backup.\n\n` +
+      `Click OK to proceed with deletion.`
+    );
+
+    if (!finalConfirm) {
       return;
     }
 
     try {
+      // Step 3: Export data before deletion
+      alert('📥 Downloading backup data...');
+      await exportService.exportAttendanceToExcel(groupId, groupName);
+      
+      // Give time for download to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 4: Delete the group
       await firebaseDB.deleteGroup(groupId);
       setGroups(groups.filter(g => g.id !== groupId));
-      alert('Group deleted successfully!');
+      
+      alert(
+        `✅ Group "${groupName}" deleted successfully!\n\n` +
+        `📁 Backup data has been downloaded to your device.\n` +
+        `Check your Downloads folder.`
+      );
     } catch (error) {
       console.error('Error deleting group:', error);
-      alert('Failed to delete group');
+      alert('❌ Failed to delete group. Please try again.');
     }
   };
 
@@ -72,6 +131,7 @@ export default function Home() {
     name: string;
     subject: string;
     branches: string[];
+    year: string;
   }) => {
     if (!user?.email) return;
 
@@ -81,6 +141,7 @@ export default function Home() {
         id: groupId,
         name: data.name,
         subject: data.subject,
+        year: data.year,
         sheetId: `sheet-${groupId}`,
         owners: [user.email],
         leaders: [user.email],
@@ -110,8 +171,22 @@ export default function Home() {
     return null;
   }
 
+  // Filter groups based on search query and year
+  const uniqueYears = [...new Set(groups.map(g => g.year).filter(Boolean))].sort().reverse();
+  
+  const filteredGroups = groups.filter(group => {
+    const matchesSearch = searchQuery === '' ||
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.branches?.some(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesYear = selectedYear === 'All' || group.year === selectedYear;
+    
+    return matchesSearch && matchesYear;
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Header */}
       <header className="border-b border-border/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
@@ -152,6 +227,73 @@ export default function Home() {
           <CreateGroupDialog onCreate={handleCreateGroup} />
         </div>
 
+        {/* Search Bar & Year Filter */}
+        {groups.length > 0 && (
+          <Card className="p-3 sm:p-4 mb-4 sm:mb-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <div className="flex flex-col gap-3">
+              {/* Search */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search groups by name, subject, or branch..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 text-sm"
+                  />
+                </div>
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchQuery('')}
+                    className="flex-shrink-0"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              
+              {/* Year Filter */}
+              {uniqueYears.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Year:</span>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant={selectedYear === 'All' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedYear('All')}
+                      className="text-xs"
+                    >
+                      All ({groups.length})
+                    </Button>
+                    {uniqueYears.map(year => (
+                      <Button
+                        key={year}
+                        variant={selectedYear === year ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedYear(year)}
+                        className="text-xs"
+                      >
+                        {year} ({groups.filter(g => g.year === year).length})
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Results Count */}
+              {(searchQuery || selectedYear !== 'All') && (
+                <p className="text-xs text-muted-foreground">
+                  Found {filteredGroups.length} of {groups.length} groups
+                  {searchQuery && ` matching "${searchQuery}"`}
+                  {selectedYear !== 'All' && ` in year ${selectedYear}`}
+                </p>
+              )}
+            </div>
+          </Card>
+        )}
+
         {groups.length === 0 ? (
           <Card className="p-12 text-center border-dashed border-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
             <div className="flex flex-col items-center">
@@ -166,9 +308,22 @@ export default function Home() {
               </p>
             </div>
           </Card>
+        ) : filteredGroups.length === 0 ? (
+          <Card className="p-12 text-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+            <div className="flex flex-col items-center">
+              <Search className="w-12 h-12 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium text-foreground mb-2">No groups found</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                No groups match "{searchQuery}"
+              </p>
+              <Button variant="outline" onClick={() => setSearchQuery('')}>
+                Clear Search
+              </Button>
+            </div>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.map((group) => (
+            {filteredGroups.map((group) => (
               <Card 
                 key={group.id} 
                 className="p-6 hover:shadow-2xl transition-all duration-300 h-full relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:scale-105 group"
@@ -188,6 +343,12 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="font-medium">{group.year || 'N/A'}</span>
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />

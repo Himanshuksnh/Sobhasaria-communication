@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Trash2, Loader2, Plus } from 'lucide-react';
+import { Trash2, Loader2, Plus, Search } from 'lucide-react';
 import { firebaseDB } from '@/lib/firebase-db';
 import ImportStudents from './import-students';
 
@@ -39,6 +39,16 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [autoLoadedFrom, setAutoLoadedFrom] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSummaryCards, setShowSummaryCards] = useState(true);
+
+  // Load summary cards preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('showSummaryCards');
+    if (saved !== null) {
+      setShowSummaryCards(saved === 'true');
+    }
+  }, []);
 
   // Load attendance data from Firebase
   useEffect(() => {
@@ -102,7 +112,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
           name: s.name,
           rollNo: s.rollNo,
           branch: s.branch,
-          status: 'present' as const,
+          status: 'absent' as const,
           attendanceMarks: 0,
           judgeMarks: 0,
           totalMarks: 0,
@@ -144,7 +154,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         name: r.name,
         rollNo: r.rollNo,
         branch: r.branch,
-        status: 'present' as const,
+        status: 'absent' as const,
         attendanceMarks: 0,
         judgeMarks: 0,
         totalMarks: 0,
@@ -167,7 +177,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
       name: newStudentName.trim(),
       rollNo: newStudentRoll.trim(),
       branch: newStudentBranch.trim(),
-      status: 'present',
+      status: 'absent',
       attendanceMarks: 0,
       judgeMarks: 0,
       totalMarks: 0,
@@ -198,11 +208,20 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
   };
 
   const handleMarksChange = (studentId: string, field: string, value: number) => {
+    // Clamp value between 0 and 5
+    const clampedValue = Math.max(0, Math.min(5, value));
+    
     setStudents(students.map(s => {
       if (s.id === studentId) {
-        const updated = { ...s, [field]: value };
+        const updated = { ...s, [field]: clampedValue };
         // Auto-calculate total (max 10)
         updated.totalMarks = updated.attendanceMarks + updated.judgeMarks;
+        
+        // Auto-mark as present if any marks are given
+        if (updated.attendanceMarks > 0 || updated.judgeMarks > 0) {
+          updated.status = 'present';
+        }
+        
         return updated;
       }
       return s;
@@ -215,6 +234,18 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         s.id === studentId ? { ...s, status: newStatus } : s
       )
     );
+  };
+
+  const markAllPresent = () => {
+    setStudents(students.map(s => ({ ...s, status: 'present' as const })));
+  };
+
+  const markAllAbsent = () => {
+    setStudents(students.map(s => ({ ...s, status: 'absent' as const })));
+  };
+
+  const resetAllStatus = () => {
+    setStudents(students.map(s => ({ ...s, status: 'present' as const })));
   };
 
   const handleDelete = (studentId: string) => {
@@ -255,10 +286,14 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     console.log('[v0] Attendance changes cancelled');
   };
 
-  // Calculate statistics (filtered by branch)
-  const filteredStudents = selectedBranch === 'All' 
-    ? students 
-    : students.filter(s => s.branch === selectedBranch);
+  // Calculate statistics (filtered by branch and search)
+  const filteredStudents = students.filter(s => {
+    const matchesBranch = selectedBranch === 'All' || s.branch === selectedBranch;
+    const matchesSearch = searchQuery === '' || 
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.rollNo.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesBranch && matchesSearch;
+  });
     
   const presentCount = filteredStudents.filter((s) => s.status === 'present').length;
   const absentCount = filteredStudents.filter((s) => s.status === 'absent').length;
@@ -283,58 +318,105 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Branch Filter */}
-      {availableBranches.length > 0 && (
-        <Card className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-            <label className="text-sm font-medium text-foreground">Filter by Branch:</label>
-            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Branches</SelectItem>
-                {availableBranches.map((branch) => (
-                  <SelectItem key={branch} value={branch}>
-                    {branch}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-xs sm:text-sm text-muted-foreground">
-              Showing {filteredStudents.length} of {students.length} students
-            </span>
+      {/* Branch Filter & Search */}
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3">
+          {/* Branch Filter */}
+          {availableBranches.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <label className="text-sm font-medium text-foreground whitespace-nowrap">Filter by Branch:</label>
+              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Branches</SelectItem>
+                  {availableBranches.map((branch) => (
+                    <SelectItem key={branch} value={branch}>
+                      {branch}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {/* Search Bar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or roll number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="flex-shrink-0"
+              >
+                Clear
+              </Button>
+            )}
           </div>
-        </Card>
+          
+          {/* Results Count */}
+          <div className="text-xs sm:text-sm text-muted-foreground">
+            Showing {filteredStudents.length} of {students.length} students
+            {searchQuery && ` matching "${searchQuery}"`}
+          </div>
+        </div>
+      </Card>
+
+      {/* Summary - Mobile Optimized with Toggle */}
+      {showSummaryCards && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <Card className="p-2 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-2">Present</p>
+            <p className="text-lg sm:text-3xl font-bold text-green-600">{presentCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">{totalCount > 0 ? ((presentCount/totalCount)*100).toFixed(0) : 0}%</p>
+          </Card>
+          <Card className="p-2 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-2">Absent</p>
+            <p className="text-lg sm:text-3xl font-bold text-red-600">{absentCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">{totalCount > 0 ? ((absentCount/totalCount)*100).toFixed(0) : 0}%</p>
+          </Card>
+          <Card className="p-2 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-2">Total</p>
+            <p className="text-lg sm:text-3xl font-bold text-foreground">{totalCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">Students</p>
+          </Card>
+          <Card className="p-2 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-2">Avg</p>
+            <p className="text-lg sm:text-3xl font-bold text-blue-600">{avgTotalMarks}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">/10</p>
+          </Card>
+          <Card className="p-2 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-2">High</p>
+            <p className="text-lg sm:text-3xl font-bold text-purple-600">{maxTotalMarks}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">marks</p>
+          </Card>
+        </div>
       )}
 
-      {/* Summary - Mobile Optimized */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <Card className="p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Present</p>
-          <p className="text-2xl sm:text-3xl font-bold text-green-600">{presentCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">{totalCount > 0 ? ((presentCount/totalCount)*100).toFixed(0) : 0}%</p>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Absent</p>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">{absentCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">{totalCount > 0 ? ((absentCount/totalCount)*100).toFixed(0) : 0}%</p>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Total</p>
-          <p className="text-2xl sm:text-3xl font-bold text-foreground">{totalCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Students</p>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Avg Marks</p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600">{avgTotalMarks}</p>
-          <p className="text-xs text-muted-foreground mt-1">out of 10</p>
-        </Card>
-        <Card className="p-4 sm:p-6">
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">Highest</p>
-          <p className="text-2xl sm:text-3xl font-bold text-purple-600">{maxTotalMarks}</p>
-          <p className="text-xs text-muted-foreground mt-1">marks</p>
-        </Card>
+      {/* Mobile: Toggle Summary Cards */}
+      <div className="md:hidden">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const newValue = !showSummaryCards;
+            setShowSummaryCards(newValue);
+            localStorage.setItem('showSummaryCards', String(newValue));
+          }}
+          className="w-full text-xs"
+        >
+          {showSummaryCards ? '📊 Hide Summary' : '📊 Show Summary'}
+        </Button>
       </div>
 
       {/* Auto-load Info Message */}
@@ -367,6 +449,41 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Quick Mark All Buttons */}
+      {students.length > 0 && (
+        <Card className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <span className="text-sm font-medium text-foreground">Quick Actions:</span>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAllPresent}
+                className="text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/20 border-green-200"
+              >
+                ✓ Mark All Present
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={markAllAbsent}
+                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 border-red-200"
+              >
+                ✗ Mark All Absent
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetAllStatus}
+                className="text-muted-foreground hover:bg-muted"
+              >
+                ↺ Reset Status
+              </Button>
+            </div>
           </div>
         </Card>
       )}
@@ -423,7 +540,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
             <Plus className="w-4 h-4 mr-2" />
             Add Student Manually
           </Button>
-          <ImportStudents groupId={groupId} onImportComplete={loadAttendanceData} />
+          <ImportStudents groupId={groupId} branches={availableBranches} onImportComplete={loadAttendanceData} />
         </div>
       )}
 
@@ -440,7 +557,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                   <th className="text-left p-4 font-semibold text-foreground text-sm">Status</th>
                   <th className="text-center p-4 font-semibold text-foreground text-sm">Attendance<br/><span className="text-xs font-normal">(0-5)</span></th>
                   <th className="text-center p-4 font-semibold text-foreground text-sm">Judge<br/><span className="text-xs font-normal">(0-5)</span></th>
-                  <th className="text-center p-4 font-semibold text-foreground bg-blue-50 text-sm">Total<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-center p-4 font-semibold text-foreground bg-blue-50 dark:bg-blue-900/30 text-sm">Total<br/><span className="text-xs font-normal">(0-10)</span></th>
                   <th className="text-center p-4 font-semibold text-foreground text-sm">Actions</th>
                 </tr>
               </thead>
@@ -468,6 +585,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                         min="0"
                         max="5"
                         value={student.attendanceMarks}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
                         className="w-16 text-center"
                       />
@@ -478,12 +596,13 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                         min="0"
                         max="5"
                         value={student.judgeMarks}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => handleMarksChange(student.id, 'judgeMarks', Number(e.target.value))}
                         className="w-16 text-center"
                       />
                     </td>
-                    <td className="p-4 text-center bg-blue-50">
-                      <span className="text-lg font-bold text-blue-600">{student.totalMarks}</span>
+                    <td className="p-4 text-center bg-blue-50 dark:bg-blue-900/30">
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{student.totalMarks}</span>
                     </td>
                     <td className="p-4 text-center">
                       <Button
@@ -526,8 +645,8 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
               onClick={() => setSelectedStudentId(selectedStudentId === student.id ? null : student.id)}
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
-                  {student.rollNo}
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                  {student.rollNo.slice(-3)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-foreground truncate">{student.name}</p>
@@ -591,6 +710,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                       min="0"
                       max="5"
                       value={student.attendanceMarks}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => handleMarksChange(student.id, 'attendanceMarks', Number(e.target.value))}
                       className="text-center font-semibold text-base h-11"
                     />
@@ -604,6 +724,7 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
                       min="0"
                       max="5"
                       value={student.judgeMarks}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => handleMarksChange(student.id, 'judgeMarks', Number(e.target.value))}
                       className="text-center font-semibold text-base h-11"
                     />

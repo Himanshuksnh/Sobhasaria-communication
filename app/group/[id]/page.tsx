@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import AttendanceTable from '@/components/group/attendance-table';
 import StudentRecords from '@/components/group/student-records';
 import AdvancedSettings from '@/components/group/advanced-settings';
+import ThemeToggle from '@/components/theme-toggle';
 import { firebaseDB } from '@/lib/firebase-db';
 import { firebaseAuth } from '@/lib/firebase-auth';
 import { exportService } from '@/lib/export-service';
@@ -96,7 +97,7 @@ export default function GroupPage({ params }: GroupPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Header */}
       <header className="border-b border-border/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
@@ -129,20 +130,21 @@ export default function GroupPage({ params }: GroupPageProps) {
                   <span className="hidden sm:inline">Settings</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-lg sm:text-xl font-bold">Group Settings & Admin</DialogTitle>
-                  <DialogDescription className="text-xs sm:text-sm">
-                    Manage leaders, generate invites, and export data
-                  </DialogDescription>
-                </DialogHeader>
-                <AdvancedSettings
-                  groupId={group.id}
-                  groupName={group.name}
-                  leaders={group.leaders}
-                />
-              </DialogContent>
-            </Dialog>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg sm:text-xl font-bold">Group Settings & Admin</DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm">
+                      Manage leaders, generate invites, and export data
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AdvancedSettings
+                    groupId={group.id}
+                    groupName={group.name}
+                    leaders={group.leaders}
+                    branches={group.branches || []}
+                  />
+                </DialogContent>
+              </Dialog>
           </div>
         </div>
       </header>

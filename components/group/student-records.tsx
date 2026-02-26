@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Download, Search } from 'lucide-react';
 import { firebaseDB } from '@/lib/firebase-db';
 
 interface StudentRecordsProps {
@@ -25,6 +26,7 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState<string>('All');
   const [branches, setBranches] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadAllRecords();
@@ -33,20 +35,26 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
   const loadAllRecords = async () => {
     setIsLoading(true);
     try {
+      console.log('Loading records for group:', groupId);
+      
       // Get all attendance records
       const allAttendance = await firebaseDB.getAllAttendance(groupId);
+      console.log('All attendance records:', allAttendance.length, allAttendance);
       
       if (allAttendance.length === 0) {
+        console.log('No attendance records found');
         setIsLoading(false);
         return;
       }
 
       // Extract unique dates and sort them
       const uniqueDates = [...new Set(allAttendance.map((a: any) => a.date))].sort();
+      console.log('Unique dates:', uniqueDates);
       setDates(uniqueDates);
 
       // Extract unique branches
       const uniqueBranches = [...new Set(allAttendance.map((a: any) => a.branch))];
+      console.log('Unique branches:', uniqueBranches);
       setBranches(uniqueBranches);
 
       // Group by student
@@ -86,6 +94,7 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
       // Sort by roll number
       studentRecords.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
+      console.log('Student records:', studentRecords);
       setRecords(studentRecords);
     } catch (error) {
       console.error('Error loading records:', error);
@@ -94,9 +103,13 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
     }
   };
 
-  const filteredRecords = selectedBranch === 'All' 
-    ? records 
-    : records.filter(r => r.branch === selectedBranch);
+  const filteredRecords = records.filter(r => {
+    const matchesBranch = selectedBranch === 'All' || r.branch === selectedBranch;
+    const matchesSearch = searchQuery === '' ||
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.rollNo.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesBranch && matchesSearch;
+  });
 
   if (isLoading) {
     return (
@@ -127,33 +140,67 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Branch Filter */}
-      {branches.length > 1 && (
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium">Filter:</label>
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant={selectedBranch === 'All' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedBranch('All')}
-              >
-                All ({records.length})
-              </Button>
-              {branches.map(branch => (
-                <Button
-                  key={branch}
-                  variant={selectedBranch === branch ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedBranch(branch)}
-                >
-                  {branch} ({records.filter(r => r.branch === branch).length})
-                </Button>
-              ))}
+      {/* Search & Filter */}
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3">
+          {/* Search Bar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or roll number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-sm"
+              />
             </div>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="flex-shrink-0 text-xs sm:text-sm"
+              >
+                Clear
+              </Button>
+            )}
           </div>
-        </Card>
-      )}
+
+          {/* Branch Filter */}
+          {branches.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="text-xs sm:text-sm font-medium whitespace-nowrap">Branch:</label>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={selectedBranch === 'All' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedBranch('All')}
+                  className="text-xs"
+                >
+                  All ({records.length})
+                </Button>
+                {branches.map(branch => (
+                  <Button
+                    key={branch}
+                    variant={selectedBranch === branch ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedBranch(branch)}
+                    className="text-xs"
+                  >
+                    {branch} ({records.filter(r => r.branch === branch).length})
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Results Count */}
+          <div className="text-xs text-muted-foreground">
+            Showing {filteredRecords.length} of {records.length} students
+            {searchQuery && ` matching "${searchQuery}"`}
+          </div>
+        </div>
+      </Card>
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
