@@ -142,6 +142,8 @@ export default function GroupPage({ params }: GroupPageProps) {
                     groupName={group.name}
                     leaders={group.leaders}
                     branches={group.branches || []}
+                    group={group}
+                    userEmail={user?.email || ''}
                   />
                 </DialogContent>
               </Dialog>
@@ -188,11 +190,11 @@ export default function GroupPage({ params }: GroupPageProps) {
               </div>
             </Card>
 
-            <AttendanceTable groupId={id} date={selectedDate} />
+            <AttendanceTable groupId={id} date={selectedDate} group={group} userEmail={user?.email || ''} />
           </TabsContent>
 
           <TabsContent value="records" className="space-y-4 sm:space-y-6">
-            <StudentRecords groupId={id} />
+            <StudentRecords groupId={id} group={group} userEmail={user?.email || ''} />
           </TabsContent>
 
           <TabsContent value="members" className="space-y-6">

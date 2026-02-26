@@ -16,6 +16,8 @@ interface AdvancedSettingsProps {
   groupName: string;
   leaders: string[];
   branches?: string[];
+  group: any;
+  userEmail: string;
 }
 
 export default function AdvancedSettings({
@@ -23,6 +25,8 @@ export default function AdvancedSettings({
   groupName,
   leaders,
   branches = [],
+  group,
+  userEmail,
 }: AdvancedSettingsProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [newLeaderEmail, setNewLeaderEmail] = useState('');
@@ -30,6 +34,36 @@ export default function AdvancedSettings({
   const [isGenerating, setIsGenerating] = useState(false);
   const [groupBranches, setGroupBranches] = useState<string[]>(branches);
   const [newBranch, setNewBranch] = useState('');
+  
+  // Leaders (special students) state
+  const [specialLeaders, setSpecialLeaders] = useState<any[]>([]);
+  const [newLeader, setNewLeader] = useState({ email: '', rollNo: '', name: '', branch: '' });
+  
+  // Teachers state
+  const [groupTeachers, setGroupTeachers] = useState<string[]>(group?.teacherEmails || []);
+  const [newTeacherEmail, setNewTeacherEmail] = useState('');
+  
+  // Check if user is teacher
+  const masterTeacherEmail = process.env.NEXT_PUBLIC_MASTER_TEACHER_EMAIL?.toLowerCase();
+  const isMasterTeacher = userEmail.toLowerCase() === masterTeacherEmail;
+  const isGroupTeacher = group?.teacherEmails?.some((email: string) => 
+    email.toLowerCase() === userEmail.toLowerCase()
+  );
+  const isTeacher = isMasterTeacher || isGroupTeacher;
+
+  // Load special leaders on mount
+  useEffect(() => {
+    loadSpecialLeaders();
+  }, [groupId]);
+
+  const loadSpecialLeaders = async () => {
+    try {
+      const leaders = await firebaseDB.getGroupLeaders(groupId);
+      setSpecialLeaders(leaders);
+    } catch (error) {
+      console.error('Error loading leaders:', error);
+    }
+  };
 
   const handleAddBranch = async () => {
     if (!newBranch.trim()) return;
@@ -65,6 +99,67 @@ export default function AdvancedSettings({
     }
   };
 
+  // Leader (special student) handlers
+  const handleAddLeader = async () => {
+    if (!newLeader.email.trim() || !newLeader.rollNo.trim() || !newLeader.name.trim() || !newLeader.branch.trim()) {
+      alert('Please fill all leader fields');
+      return;
+    }
+
+    try {
+      await firebaseDB.addLeader(groupId, newLeader);
+      await loadSpecialLeaders();
+      setNewLeader({ email: '', rollNo: '', name: '', branch: '' });
+      alert('Leader added successfully!');
+    } catch (error) {
+      console.error('Error adding leader:', error);
+      alert('Failed to add leader');
+    }
+  };
+
+  const handleRemoveLeader = async (email: string) => {
+    if (!confirm('Remove this leader?')) return;
+
+    try {
+      await firebaseDB.deleteLeader(groupId, email);
+      await loadSpecialLeaders();
+      alert('Leader removed successfully!');
+    } catch (error) {
+      console.error('Error removing leader:', error);
+      alert('Failed to remove leader');
+    }
+  };
+
+  // Teacher handlers (only for master teacher)
+  const handleAddTeacher = async () => {
+    if (!newTeacherEmail.trim()) return;
+
+    try {
+      const updatedTeachers = [...groupTeachers, newTeacherEmail.trim().toLowerCase()];
+      await firebaseDB.updateGroup(groupId, { teacherEmails: updatedTeachers });
+      setGroupTeachers(updatedTeachers);
+      setNewTeacherEmail('');
+      alert('Teacher added successfully!');
+    } catch (error) {
+      console.error('Error adding teacher:', error);
+      alert('Failed to add teacher');
+    }
+  };
+
+  const handleRemoveTeacher = async (email: string) => {
+    if (!confirm('Remove this teacher?')) return;
+
+    try {
+      const updatedTeachers = groupTeachers.filter(t => t !== email);
+      await firebaseDB.updateGroup(groupId, { teacherEmails: updatedTeachers });
+      setGroupTeachers(updatedTeachers);
+      alert('Teacher removed successfully!');
+    } catch (error) {
+      console.error('Error removing teacher:', error);
+      alert('Failed to remove teacher');
+    }
+  };
+
   const handleGenerateInvite = async () => {
     setIsGenerating(true);
     try {
@@ -96,34 +191,34 @@ export default function AdvancedSettings({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleAddLeader = async () => {
+  const handleAddManager = async () => {
     if (!newLeaderEmail.trim()) return;
     
     try {
       await firebaseDB.addLeaderToGroup(groupId, newLeaderEmail.trim());
-      alert('Leader added successfully!');
+      alert('Manager added successfully!');
       setNewLeaderEmail('');
       window.location.reload();
     } catch (error) {
-      console.error('Error adding leader:', error);
-      alert('Failed to add leader');
+      console.error('Error adding manager:', error);
+      alert('Failed to add manager');
     }
   };
 
-  const handleRemoveLeader = async (email: string) => {
-    if (!confirm(`Remove ${email} as a leader?`)) return;
+  const handleRemoveManager = async (email: string) => {
+    if (!confirm(`Remove ${email} as a manager?`)) return;
     
     try {
       const group = await firebaseDB.getGroup(groupId);
       if (group) {
         const updatedLeaders = group.leaders.filter(l => l !== email);
         await firebaseDB.updateGroup(groupId, { leaders: updatedLeaders });
-        alert('Leader removed successfully!');
+        alert('Manager removed successfully!');
         window.location.reload();
       }
     } catch (error) {
-      console.error('Error removing leader:', error);
-      alert('Failed to remove leader');
+      console.error('Error removing manager:', error);
+      alert('Failed to remove manager');
     }
   };
 
@@ -200,15 +295,132 @@ export default function AdvancedSettings({
         </div>
       </div>
 
-      <Tabs defaultValue="leaders" className="w-full space-y-4 sm:space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="leaders" className="text-xs sm:text-sm">Leaders</TabsTrigger>
+      <Tabs defaultValue={isMasterTeacher ? "teachers" : "student-leaders"} className="w-full space-y-4 sm:space-y-6">
+      <TabsList className={`grid w-full ${isMasterTeacher ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        {isMasterTeacher && (
+          <TabsTrigger value="teachers" className="text-xs sm:text-sm">Teachers</TabsTrigger>
+        )}
+        {isTeacher && (
+          <TabsTrigger value="student-leaders" className="text-xs sm:text-sm">Leaders</TabsTrigger>
+        )}
+        <TabsTrigger value="managers" className="text-xs sm:text-sm">Managers</TabsTrigger>
         <TabsTrigger value="branches" className="text-xs sm:text-sm">Branches</TabsTrigger>
         <TabsTrigger value="invites" className="text-xs sm:text-sm">Invites</TabsTrigger>
         <TabsTrigger value="danger" className="text-xs sm:text-sm">Danger</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="leaders" className="space-y-3 sm:space-y-4">
+      {/* Teachers Tab - Only for Master Teacher */}
+      {isMasterTeacher && (
+        <TabsContent value="teachers" className="space-y-3 sm:space-y-4">
+          <Card className="p-4 sm:p-6">
+            <h3 className="font-semibold text-lg mb-4">Group-Specific Teachers</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add teachers who can manage this group and its leaders.
+            </p>
+            
+            <div className="flex gap-2 mb-4">
+              <Input
+                type="email"
+                placeholder="teacher@example.com"
+                value={newTeacherEmail}
+                onChange={(e) => setNewTeacherEmail(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAddTeacher}>Add Teacher</Button>
+            </div>
+
+            <div className="space-y-2">
+              {groupTeachers.map((teacher) => (
+                <div key={teacher} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <span className="text-sm">{teacher}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveTeacher(teacher)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {groupTeachers.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No group-specific teachers added yet
+                </p>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+      )}
+
+      {/* Student Leaders Tab - Only for Teachers */}
+      {isTeacher && (
+        <TabsContent value="student-leaders" className="space-y-3 sm:space-y-4">
+          <Card className="p-4 sm:p-6">
+            <h3 className="font-semibold text-lg mb-4">Special Student Leaders</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add students as leaders. They will have special privileges and their attendance will be tracked separately.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={newLeader.email}
+                onChange={(e) => setNewLeader({...newLeader, email: e.target.value})}
+              />
+              <Input
+                placeholder="Roll No"
+                value={newLeader.rollNo}
+                onChange={(e) => setNewLeader({...newLeader, rollNo: e.target.value})}
+              />
+              <Input
+                placeholder="Name"
+                value={newLeader.name}
+                onChange={(e) => setNewLeader({...newLeader, name: e.target.value})}
+              />
+              <select
+                value={newLeader.branch}
+                onChange={(e) => setNewLeader({...newLeader, branch: e.target.value})}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select Branch</option>
+                {groupBranches.map(branch => (
+                  <option key={branch} value={branch}>{branch}</option>
+                ))}
+              </select>
+            </div>
+            <Button onClick={handleAddLeader} className="w-full sm:w-auto">Add Leader</Button>
+
+            <div className="space-y-2 mt-4">
+              {specialLeaders.map((leader) => (
+                <div key={leader.email} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div>
+                    <p className="font-medium">{leader.name}</p>
+                    <p className="text-sm text-muted-foreground">{leader.rollNo} • {leader.branch} • {leader.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveLeader(leader.email)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {specialLeaders.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No student leaders added yet
+                </p>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+      )}
+
+      {/* Managers Tab - Renamed from Leaders */}
+      <TabsContent value="managers" className="space-y-3 sm:space-y-4">
         <Card className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -216,7 +428,7 @@ export default function AdvancedSettings({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
             </div>
-            <h3 className="font-semibold text-foreground text-base sm:text-lg">Current Leaders</h3>
+            <h3 className="font-semibold text-foreground text-base sm:text-lg">Group Managers</h3>
           </div>
           <div className="space-y-2 sm:space-y-3">
             {leaders.map((leader, index) => (
@@ -238,7 +450,7 @@ export default function AdvancedSettings({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveLeader(leader)}
+                    onClick={() => handleRemoveManager(leader)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
                   >
                     <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -250,9 +462,9 @@ export default function AdvancedSettings({
         </Card>
 
         <Card className="p-4 sm:p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-0">
-          <h3 className="font-semibold text-foreground mb-1.5 sm:mb-2 text-sm sm:text-base">Add New Leader (Direct)</h3>
+          <h3 className="font-semibold text-foreground mb-1.5 sm:mb-2 text-sm sm:text-base">Add New Manager</h3>
           <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-            Add a leader directly by email (they must have an account)
+            Add a manager by email (they can manage students)
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
@@ -263,7 +475,7 @@ export default function AdvancedSettings({
               className="flex-1 text-sm"
             />
             <Button 
-              onClick={handleAddLeader}
+              onClick={handleAddManager}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto text-sm"
             >
               Add
