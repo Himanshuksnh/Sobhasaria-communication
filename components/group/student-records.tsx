@@ -15,10 +15,9 @@ interface StudentRecord {
   rollNo: string;
   name: string;
   branch: string;
-  dateWiseMarks: { [date: string]: number }; // date -> marks (out of 10)
-  dateWiseStatus: { [date: string]: string }; // date -> status (Present/Absent)
+  dateWiseMarks: { [date: string]: number };
+  dateWiseStatus: { [date: string]: string };
   totalMarks: number;
-  averageMarks: number;
 }
 
 export default function StudentRecords({ groupId }: StudentRecordsProps) {
@@ -72,7 +71,6 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
             dateWiseMarks: {},
             dateWiseStatus: {},
             totalMarks: 0,
-            averageMarks: 0,
           });
         }
 
@@ -81,17 +79,10 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
         student.dateWiseStatus[record.date] = record.status || 'Absent';
       });
 
-      // Calculate totals and averages
+      // Calculate totals
       const studentRecords = Array.from(studentMap.values()).map(student => {
-        const marksArray = Object.values(student.dateWiseMarks);
-        const total = marksArray.reduce((sum, marks) => sum + marks, 0);
-        const average = marksArray.length > 0 ? total / marksArray.length : 0;
-
-        return {
-          ...student,
-          totalMarks: total,
-          averageMarks: parseFloat(average.toFixed(2)),
-        };
+        const total = Object.values(student.dateWiseMarks).reduce((sum, marks) => sum + marks, 0);
+        return { ...student, totalMarks: total };
       });
 
       // Sort by roll number
@@ -220,7 +211,6 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
                   </th>
                 ))}
                 <th className="text-center p-3 font-semibold bg-blue-50 dark:bg-blue-900/30">Total</th>
-                <th className="text-center p-3 font-semibold bg-green-50 dark:bg-green-900/30">Avg</th>
               </tr>
             </thead>
             <tbody>
@@ -245,10 +235,7 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
                     </td>
                   ))}
                   <td className="p-3 text-center bg-blue-50 dark:bg-blue-900/30">
-                    <span className="font-bold text-blue-600">{student.totalMarks}</span>
-                  </td>
-                  <td className="p-3 text-center bg-green-50 dark:bg-green-900/30">
-                    <span className="font-bold text-green-600">{student.averageMarks}</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{student.totalMarks}</span>
                   </td>
                 </tr>
               ))}
@@ -273,11 +260,6 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Average:</span>
-                <span className="font-semibold text-green-600">{student.averageMarks}/10</span>
-              </div>
-              
               <div className="border-t border-border pt-2">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Date-wise Marks:</p>
                 <div className="grid grid-cols-3 gap-2">

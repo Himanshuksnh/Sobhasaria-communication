@@ -23,6 +23,7 @@ export class FirebaseDBService {
   private attendanceCollection = 'attendance';
   private invitesCollection = 'invites';
   private studentsCollection = 'students';
+  private leadersCollection = 'leaders';
 
   private checkDB() {
     if (!db) {
@@ -252,6 +253,90 @@ export class FirebaseDBService {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data());
   }
+
+  // ==================== LEADERS ====================
+
+  async addLeader(groupId: string, leader: {
+    email: string;
+    rollNo: string;
+    name: string;
+    branch: string;
+  }): Promise<void> {
+    this.checkDB();
+    const leaderRef = doc(db, this.leadersCollection, `${groupId}_${leader.email}`);
+    await setDoc(leaderRef, {
+      groupId,
+      ...leader,
+      createdAt: Timestamp.now(),
+    });
+  }
+
+  async getGroupLeaders(groupId: string): Promise<any[]> {
+    this.checkDB();
+    const leadersRef = collection(db, this.leadersCollection);
+    const q = query(leadersRef, where('groupId', '==', groupId));
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data());
+  }
+
+  async deleteLeader(groupId: string, email: string): Promise<void> {
+    this.checkDB();
+    const leaderRef = doc(db, this.leadersCollection, `${groupId}_${email}`);
+    await deleteDoc(leaderRef);
+  }
+
+  async saveLeaderAttendance(
+    groupId: string,
+    date: string,
+    records: Array<{
+      email: string;
+      rollNo: string;
+      name: string;
+      branch: string;
+      status: string;
+      attendanceMarks: number;
+      judgeMarks: number;
+      totalMarks: number;
+      remarks?: string;
+    }>
+  ): Promise<void> {
+    this.checkDB();
+    const batch = writeBatch(db);
+
+    records.forEach((record) => {
+      const attendanceRef = doc(
+        db,
+        this.attendanceCollection,
+        `${groupId}_${date}_leader_${record.email}`
+      );
+      
+      batch.set(attendanceRef, {
+        groupId,
+        date,
+        ...record,
+        isLeader: true,
+        timestamp: Timestamp.now(),
+      });
+    });
+
+    await batch.commit();
+  }
+
+  async getLeaderAttendanceByDate(groupId: string, date: string): Promise<any[]> {
+    this.checkDB();
+    const attendanceRef = collection(db, this.attendanceCollection);
+    const q = query(
+      attendanceRef,
+      where('groupId', '==', groupId),
+      where('date', '==', date),
+      where('isLeader', '==', true)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data());
+  }
 }
+
 
 export const firebaseDB = new FirebaseDBService();

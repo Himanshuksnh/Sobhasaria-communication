@@ -8,6 +8,16 @@ export interface Group {
   createdAt: string;
   branches?: string[];
   currentBranch?: string;
+  year?: string;
+  teacherEmail?: string; // Main authority who can manage leaders
+}
+
+export interface Leader {
+  email: string;
+  rollNo: string;
+  name: string;
+  branch: string;
+  groupId: string;
 }
 
 export interface AttendanceRecord {

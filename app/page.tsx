@@ -132,6 +132,7 @@ export default function Home() {
     subject: string;
     branches: string[];
     year: string;
+    teacherEmail: string;
   }) => {
     if (!user?.email) return;
 
@@ -142,6 +143,7 @@ export default function Home() {
         name: data.name,
         subject: data.subject,
         year: data.year,
+        teacherEmail: data.teacherEmail,
         sheetId: `sheet-${groupId}`,
         owners: [user.email],
         leaders: [user.email],

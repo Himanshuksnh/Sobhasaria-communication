@@ -236,18 +236,6 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
     );
   };
 
-  const markAllPresent = () => {
-    setStudents(students.map(s => ({ ...s, status: 'present' as const })));
-  };
-
-  const markAllAbsent = () => {
-    setStudents(students.map(s => ({ ...s, status: 'absent' as const })));
-  };
-
-  const resetAllStatus = () => {
-    setStudents(students.map(s => ({ ...s, status: 'present' as const })));
-  };
-
   const handleDelete = (studentId: string) => {
     setStudents(students.filter((s) => s.id !== studentId));
   };
@@ -453,40 +441,6 @@ export default function AttendanceTable({ groupId, date }: AttendanceTableProps)
         </Card>
       )}
 
-      {/* Quick Mark All Buttons */}
-      {students.length > 0 && (
-        <Card className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <span className="text-sm font-medium text-foreground">Quick Actions:</span>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={markAllPresent}
-                className="text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-900/20 border-green-200"
-              >
-                ✓ Mark All Present
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={markAllAbsent}
-                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 border-red-200"
-              >
-                ✗ Mark All Absent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetAllStatus}
-                className="text-muted-foreground hover:bg-muted"
-              >
-                ↺ Reset Status
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Add Student Form - Mobile Optimized */}
       {showAddForm && (
