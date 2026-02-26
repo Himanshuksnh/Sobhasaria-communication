@@ -16,6 +16,7 @@ interface StudentRecord {
   name: string;
   branch: string;
   dateWiseMarks: { [date: string]: number }; // date -> marks (out of 10)
+  dateWiseStatus: { [date: string]: string }; // date -> status (Present/Absent)
   totalMarks: number;
   averageMarks: number;
 }
@@ -69,6 +70,7 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
             name: record.name,
             branch: record.branch,
             dateWiseMarks: {},
+            dateWiseStatus: {},
             totalMarks: 0,
             averageMarks: 0,
           });
@@ -76,6 +78,7 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
 
         const student = studentMap.get(key)!;
         student.dateWiseMarks[record.date] = record.totalMarks || 0;
+        student.dateWiseStatus[record.date] = record.status || 'Absent';
       });
 
       // Calculate totals and averages
@@ -230,9 +233,9 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
                     <td key={date} className="p-3 text-center">
                       {student.dateWiseMarks[date] !== undefined ? (
                         <span className={`inline-block px-2 py-1 rounded font-medium ${
-                          student.dateWiseMarks[date] >= 8 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                          student.dateWiseMarks[date] >= 5 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          student.dateWiseStatus[date]?.toLowerCase() === 'present' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                           {student.dateWiseMarks[date]}
                         </span>
@@ -285,9 +288,9 @@ export default function StudentRecords({ groupId }: StudentRecordsProps) {
                       </p>
                       {student.dateWiseMarks[date] !== undefined ? (
                         <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${
-                          student.dateWiseMarks[date] >= 8 ? 'bg-green-100 text-green-700' :
-                          student.dateWiseMarks[date] >= 5 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
+                          student.dateWiseStatus[date]?.toLowerCase() === 'present' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
                           {student.dateWiseMarks[date]}
                         </span>
