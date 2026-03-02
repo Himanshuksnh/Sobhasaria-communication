@@ -21,11 +21,9 @@ export class ExportService {
         'Name': record.name,
         'Branch': record.branch,
         'Status': record.status,
-        'Attendance Marks': record.attendanceMarks,
-        'English Speaking': record.englishSpeaking,
-        'Active Participation': record.activeParticipation,
-        'Creative Work': record.creativeWork,
-        'Total Marks': record.totalMarks,
+        'Attendance Marks (0-5)': record.attendanceMarks || 0,
+        'Judge Marks (0-5)': record.judgeMarks || 0,
+        'Total Marks (0-10)': record.totalMarks || 0,
         'Remarks': record.remarks || '',
       }));
 
@@ -65,11 +63,9 @@ export class ExportService {
         'Name': record.name,
         'Branch': record.branch,
         'Status': record.status,
-        'Attendance Marks': record.attendanceMarks,
-        'English Speaking': record.englishSpeaking,
-        'Active Participation': record.activeParticipation,
-        'Creative Work': record.creativeWork,
-        'Total Marks': record.totalMarks,
+        'Attendance Marks (0-5)': record.attendanceMarks || 0,
+        'Judge Marks (0-5)': record.judgeMarks || 0,
+        'Total Marks (0-10)': record.totalMarks || 0,
         'Remarks': record.remarks || '',
       }));
 
