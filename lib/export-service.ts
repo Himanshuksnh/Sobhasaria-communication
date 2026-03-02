@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { firebaseDB } from './firebase-db';
 
 export class ExportService {
-  // Export attendance data to Excel
+  // Export attendance data to Excel (Date-wise format like Records page)
   async exportAttendanceToExcel(groupId: string, groupName: string): Promise<void> {
     try {
       // Fetch all attendance records
@@ -14,18 +14,57 @@ export class ExportService {
         return;
       }
 
-      // Prepare data for Excel
-      const excelData = records.map((record) => ({
-        'Date': record.date,
-        'Roll No': record.rollNo,
-        'Name': record.name,
-        'Branch': record.branch,
-        'Status': record.status,
-        'Attendance Marks (0-5)': record.attendanceMarks || 0,
-        'Judge Marks (0-5)': record.judgeMarks || 0,
-        'Total Marks (0-10)': record.totalMarks || 0,
-        'Remarks': record.remarks || '',
-      }));
+      // Get unique dates and sort them
+      const dates = [...new Set(records.map(r => r.date))].sort();
+
+      // Group records by student
+      const studentMap: { [key: string]: any } = {};
+
+      records.forEach((record) => {
+        const key = record.rollNo;
+        if (!studentMap[key]) {
+          studentMap[key] = {
+            rollNo: record.rollNo,
+            name: record.name,
+            branch: record.branch,
+            dateWiseMarks: {},
+            totalMarks: 0,
+          };
+        }
+        studentMap[key].dateWiseMarks[record.date] = record.totalMarks || 0;
+      });
+
+      // Calculate total marks for each student
+      Object.values(studentMap).forEach((student: any) => {
+        student.totalMarks = Object.values(student.dateWiseMarks).reduce((sum: number, marks: any) => sum + marks, 0);
+      });
+
+      // Prepare data for Excel with dates as columns
+      const excelData = Object.values(studentMap).map((student: any) => {
+        const row: any = {
+          'Roll No': student.rollNo,
+          'Name': student.name,
+          'Branch': student.branch,
+        };
+
+        // Add date columns
+        dates.forEach(date => {
+          const formattedDate = new Date(date).toLocaleDateString('en-GB', { 
+            day: '2-digit', 
+            month: 'short',
+            year: 'numeric'
+          });
+          row[formattedDate] = student.dateWiseMarks[date] !== undefined ? student.dateWiseMarks[date] : '-';
+        });
+
+        // Add total column
+        row['Total'] = student.totalMarks;
+
+        return row;
+      });
+
+      // Sort by roll number
+      excelData.sort((a, b) => a['Roll No'].localeCompare(b['Roll No']));
 
       // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
@@ -45,7 +84,7 @@ export class ExportService {
     }
   }
 
-  // Export attendance data to CSV
+  // Export attendance data to CSV (Date-wise format like Records page)
   async exportAttendanceToCSV(groupId: string, groupName: string): Promise<void> {
     try {
       // Fetch all attendance records
@@ -56,18 +95,57 @@ export class ExportService {
         return;
       }
 
-      // Prepare data for CSV
-      const csvData = records.map((record) => ({
-        'Date': record.date,
-        'Roll No': record.rollNo,
-        'Name': record.name,
-        'Branch': record.branch,
-        'Status': record.status,
-        'Attendance Marks (0-5)': record.attendanceMarks || 0,
-        'Judge Marks (0-5)': record.judgeMarks || 0,
-        'Total Marks (0-10)': record.totalMarks || 0,
-        'Remarks': record.remarks || '',
-      }));
+      // Get unique dates and sort them
+      const dates = [...new Set(records.map(r => r.date))].sort();
+
+      // Group records by student
+      const studentMap: { [key: string]: any } = {};
+
+      records.forEach((record) => {
+        const key = record.rollNo;
+        if (!studentMap[key]) {
+          studentMap[key] = {
+            rollNo: record.rollNo,
+            name: record.name,
+            branch: record.branch,
+            dateWiseMarks: {},
+            totalMarks: 0,
+          };
+        }
+        studentMap[key].dateWiseMarks[record.date] = record.totalMarks || 0;
+      });
+
+      // Calculate total marks for each student
+      Object.values(studentMap).forEach((student: any) => {
+        student.totalMarks = Object.values(student.dateWiseMarks).reduce((sum: number, marks: any) => sum + marks, 0);
+      });
+
+      // Prepare data for CSV with dates as columns
+      const csvData = Object.values(studentMap).map((student: any) => {
+        const row: any = {
+          'Roll No': student.rollNo,
+          'Name': student.name,
+          'Branch': student.branch,
+        };
+
+        // Add date columns
+        dates.forEach(date => {
+          const formattedDate = new Date(date).toLocaleDateString('en-GB', { 
+            day: '2-digit', 
+            month: 'short',
+            year: 'numeric'
+          });
+          row[formattedDate] = student.dateWiseMarks[date] !== undefined ? student.dateWiseMarks[date] : '-';
+        });
+
+        // Add total column
+        row['Total'] = student.totalMarks;
+
+        return row;
+      });
+
+      // Sort by roll number
+      csvData.sort((a, b) => a['Roll No'].localeCompare(b['Roll No']));
 
       // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
