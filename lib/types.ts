@@ -20,6 +20,29 @@ export interface Leader {
   groupId: string;
 }
 
+// Daily Awards System
+export interface DailyAwards {
+  groupId: string;
+  date: string;
+  
+  // Group Awards (team names)
+  bestPerformerGroup?: string;
+  runnerUpBestPerformerGroup?: string;
+  bestImprovedGroup?: string;
+  runnerUpBestImprovedGroup?: string;
+  
+  // Individual Awards (student names)
+  bestPerformer?: string;
+  bestPerformerRunnerUp?: string;
+  bestImproved?: string;
+  bestImprovedRunnerUp?: string;
+  
+  // Metadata
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface AttendanceRecord {
   date: string;
   studentId: string;

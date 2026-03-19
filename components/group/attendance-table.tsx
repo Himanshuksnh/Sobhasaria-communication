@@ -774,6 +774,24 @@ export default function AttendanceTable({ groupId, date, group, userEmail }: Att
                   </div>
                 </div>
                 
+                {/* Notes/Remarks */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                    Notes/Remarks (Optional)
+                  </label>
+                  <textarea
+                    placeholder="Add any notes or remarks..."
+                    value={student.remarks || ''}
+                    onChange={(e) => {
+                      setStudents(students.map(s => 
+                        s.id === student.id ? { ...s, remarks: e.target.value } : s
+                      ));
+                    }}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm resize-none"
+                    rows={2}
+                  />
+                </div>
+                
                 {/* Delete Button */}
                 <Button
                   variant="outline"
@@ -1411,6 +1429,24 @@ export default function AttendanceTable({ groupId, date, group, userEmail }: Att
                         <span className="text-sm font-medium text-foreground">Total Marks</span>
                         <span className="text-2xl font-bold text-blue-600">{student.totalMarks}/10</span>
                       </div>
+                    </div>
+                    
+                    {/* Notes/Remarks */}
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                        Notes/Remarks (Optional)
+                      </label>
+                      <textarea
+                        placeholder="Add any notes or remarks..."
+                        value={student.remarks || ''}
+                        onChange={(e) => {
+                          setStudents(students.map(s => 
+                            s.id === student.id ? { ...s, remarks: e.target.value } : s
+                          ));
+                        }}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm resize-none"
+                        rows={2}
+                      />
                     </div>
                     
                     {/* Delete Button */}

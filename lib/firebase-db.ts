@@ -24,6 +24,7 @@ export class FirebaseDBService {
   private invitesCollection = 'invites';
   private studentsCollection = 'students';
   private leadersCollection = 'leaders';
+  private awardsCollection = 'dailyAwards';
 
   private checkDB() {
     if (!db) {
@@ -342,6 +343,64 @@ export class FirebaseDBService {
     
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data());
+  }
+
+  // ==================== DAILY AWARDS ====================
+
+  async saveDailyAwards(
+    groupId: string,
+    date: string,
+    awards: {
+      bestPerformerGroup?: string;
+      runnerUpBestPerformerGroup?: string;
+      bestImprovedGroup?: string;
+      runnerUpBestImprovedGroup?: string;
+      bestPerformer?: string;
+      bestPerformerRunnerUp?: string;
+      bestImproved?: string;
+      bestImprovedRunnerUp?: string;
+    },
+    createdBy: string
+  ): Promise<void> {
+    this.checkDB();
+    const awardsRef = doc(db, this.awardsCollection, `${groupId}_${date}`);
+    
+    await setDoc(awardsRef, {
+      groupId,
+      date,
+      ...awards,
+      createdBy,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  async getDailyAwards(groupId: string, date: string): Promise<any | null> {
+    this.checkDB();
+    const awardsRef = doc(db, this.awardsCollection, `${groupId}_${date}`);
+    const awardsSnap = await getDoc(awardsRef);
+    
+    if (awardsSnap.exists()) {
+      return awardsSnap.data();
+    }
+    return null;
+  }
+
+  async getAllDailyAwards(groupId: string): Promise<any[]> {
+    this.checkDB();
+    const awardsRef = collection(db, this.awardsCollection);
+    const q = query(
+      awardsRef,
+      where('groupId', '==', groupId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const results = querySnapshot.docs.map(doc => doc.data());
+    
+    // Sort by date
+    results.sort((a, b) => b.date.localeCompare(a.date));
+    
+    return results;
   }
 }
 

@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import AttendanceTable from '@/components/group/attendance-table';
 import StudentRecords from '@/components/group/student-records';
 import AdvancedSettings from '@/components/group/advanced-settings';
+import DailyAwards from '@/components/group/daily-awards';
 import ThemeToggle from '@/components/theme-toggle';
 import { firebaseDB } from '@/lib/firebase-db';
 import { firebaseAuth } from '@/lib/firebase-auth';
@@ -154,8 +155,9 @@ export default function GroupPage({ params }: GroupPageProps) {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs defaultValue="attendance" className="space-y-4 sm:space-y-6">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="attendance" className="text-xs sm:text-sm">Attendance</TabsTrigger>
+            <TabsTrigger value="awards" className="text-xs sm:text-sm">Awards</TabsTrigger>
             <TabsTrigger value="records" className="text-xs sm:text-sm">Records</TabsTrigger>
             <TabsTrigger value="members" className="text-xs sm:text-sm">Members</TabsTrigger>
           </TabsList>
@@ -191,6 +193,10 @@ export default function GroupPage({ params }: GroupPageProps) {
             </Card>
 
             <AttendanceTable groupId={id} date={selectedDate} group={group} userEmail={user?.email || ''} />
+          </TabsContent>
+
+          <TabsContent value="awards" className="space-y-4 sm:space-y-6">
+            <DailyAwards groupId={id} date={selectedDate} userEmail={user?.email || ''} group={group} />
           </TabsContent>
 
           <TabsContent value="records" className="space-y-4 sm:space-y-6">
